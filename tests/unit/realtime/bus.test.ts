@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GalleryItem } from "@/server/gallery/items";
-import { createBus, toGuestMessage, toHostMessage, type BusMessage } from "@/server/realtime/bus";
+import { createBus, toGuestMessage, toHostMessage, toSlideshowMessage, type BusMessage } from "@/server/realtime/bus";
 
 const photo: GalleryItem = {
   type: "upload",
@@ -75,5 +75,24 @@ describe("closed message", () => {
     expect(toHostMessage({ type: "closed" })).toBeNull();
     expect(toHostMessage({ type: "remove", id: "u1" })).toEqual({ type: "remove", id: "u1" });
     expect(toHostMessage({ type: "item", item: photo })).toEqual({ type: "item", item: photo });
+  });
+});
+
+describe("toSlideshowMessage", () => {
+  it("drops closed", () => {
+    expect(toSlideshowMessage({ type: "closed" })).toBeNull();
+  });
+
+  it("strips the original link", () => {
+    expect(toSlideshowMessage({ type: "item", item: photo })).toEqual({ type: "item", item: { ...photo, originalUrl: null } });
+  });
+
+  it("turns hidden or pending items into removals", () => {
+    expect(toSlideshowMessage({ type: "item", item: { ...photo, moderation: "HIDDEN" } })).toEqual({ type: "remove", id: "u1" });
+    expect(toSlideshowMessage({ type: "item", item: { ...photo, moderation: "PENDING_APPROVAL" } })).toEqual({ type: "remove", id: "u1" });
+  });
+
+  it("passes removals through", () => {
+    expect(toSlideshowMessage({ type: "remove", id: "u1" })).toEqual({ type: "remove", id: "u1" });
   });
 });

@@ -1,6 +1,6 @@
 # Majlis Ku: Codebase Handbook (Claude Code)
 
-Owner: Izzham Burhan, TMRND. Last updated: 2026-10-21.
+Owner: Izzham Burhan, TMRND. Last updated: 2026-10-22.
 Other agent platforms (Codex, Gemini CLI, Copilot) read `AGENTS.md`. This file is the Claude Code entry point. Both files describe the same project and rules; keep them in sync.
 
 ## What this is
@@ -108,7 +108,7 @@ scripts/                 worktree-add/cleanup, skills.mjs (sync and parity check
 | 0 Collaboration scaffolding (handbooks, playbook, skills, CI, MCP) | done |
 | 1 Setup: scaffold, schema, auth, i18n, base layout | done |
 | 2 Guestbook MVP: events, QR and stand PDF, guest photo and wish upload, host and guest gallery, PIN | done |
-| 3 Media+: video and voice (ffmpeg processing in the background), live gallery over SSE, venue slideshow | done |
+| 3 Media+: video and voice (ffmpeg processing in the background), live gallery over SSE, venue slideshow with four layouts, a print frame, a guest-name toggle and a QR & wishes panel | done |
 | 4 Moderation and export: approve, hide, delete, approve all, ZIP of originals plus wishes PDF and CSV, co-host invites, delete event | done |
 | 5 E-card and RSVP: 3 templates, builder with photos and music, public card at `/i/{slug}` with countdown, maps, calendar, OG image, RSVP with edit, list with CSV and Excel | done |
 | 6 Payments and plans | deferred by the developer (plans and limits still enforced) |

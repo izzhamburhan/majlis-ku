@@ -3,36 +3,18 @@ import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import ffmpegPath from "ffmpeg-static";
 import sharp from "sharp";
-import { signInAs } from "./helpers";
+import { joinAsGuest, openDemoEvent } from "./helpers";
 
 const run = promisify(execFile);
-const SLUG = "demo-aisyah-daniel"; // seeded on the Premium plan
 
 async function testVideo(): Promise<Buffer> {
   const out = join(tmpdir(), `majlis-e2e-${Date.now()}.mp4`);
   await run(ffmpegPath!, ["-y", "-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc=duration=3:size=320x240:rate=15",
     "-f", "lavfi", "-i", "sine=frequency=440:duration=3", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", out]);
   return readFile(out);
-}
-
-async function joinAsGuest(page: Page, name: string) {
-  await page.goto(`/${SLUG}`);
-  const nameBox = page.getByPlaceholder("cth. Mak Cik Kiah");
-  if (await nameBox.isVisible()) {
-    await nameBox.fill(name);
-    await page.getByRole("button", { name: "Teruskan" }).click();
-  }
-  await expect(page.getByText(`Hai, ${name}!`)).toBeVisible();
-}
-
-async function openDemoEvent(host: Page) {
-  await signInAs(host, "demo.host@majlisku.test");
-  await host.getByRole("link", { name: /Aisyah & Daniel/ }).first().click();
-  await host.waitForURL(/\/dashboard\/events\/[a-z0-9]+$/);
-  return host.url().split("/").pop()!;
 }
 
 test("guest sends a video and a voice message; both are processed and shown to the host", async ({ browser }) => {

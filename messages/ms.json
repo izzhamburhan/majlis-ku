@@ -455,7 +455,21 @@
     "scan": "Imbas untuk kongsi gambar & ucapan",
     "empty": "Menunggu kenangan pertama…",
     "fullscreen": "Skrin penuh",
-    "by": "oleh {name}"
+    "by": "oleh {name}",
+    "settings": "Tetapan",
+    "close": "Tutup",
+    "layout": "Susun atur",
+    "layoutSingle": "Satu demi satu",
+    "layoutCollage": "Kolaj",
+    "layoutFilm": "Jalur filem",
+    "layoutMosaic": "Mozek",
+    "frame": "Bingkai cetak",
+    "names": "Tunjuk nama tetamu",
+    "rail": "Panel QR & ucapan",
+    "wishes": "Ucapan terkini",
+    "railEmpty": "Belum ada ucapan",
+    "emptyMedia": "Menunggu gambar pertama…",
+    "qrAlt": "Kod QR untuk berkongsi kenangan"
   },
   "moderation": {
     "approve": "Luluskan",

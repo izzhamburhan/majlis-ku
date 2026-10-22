@@ -18,11 +18,72 @@ body {
   color: var(--color-ink);
 }
 
+/* Slideshow motion. Reduced motion turns all of it off (the film steps on a timer instead). */
+@keyframes film-scroll {
+  to {
+    transform: translateX(calc(-100% / 12));
+  }
+}
+
+@keyframes film-scroll-b {
+  to {
+    transform: translateX(calc(-100% / 12));
+  }
+}
+
+@keyframes rail-scroll {
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes collage-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-4%) scale(1.12);
+  }
+}
+
+@keyframes tile-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Two names for the same animation: switching the name restarts it without remounting the strip. */
+.film-track-0 {
+  animation: film-scroll 6s linear forwards;
+}
+
+.film-track-1 {
+  animation: film-scroll-b 6s linear forwards;
+}
+
+.rail-scroll {
+  animation: rail-scroll var(--rail-seconds, 60s) linear infinite;
+}
+
+.collage-drop {
+  animation: collage-drop 0.6s ease-out;
+}
+
+.tile-fade {
+  animation: tile-fade 0.6s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .film-track-0,
+  .film-track-1,
+  .rail-scroll,
+  .collage-drop,
+  .tile-fade {
+    animation: none !important;
   }
 }

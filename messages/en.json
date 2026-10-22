@@ -455,7 +455,21 @@
     "scan": "Scan to share photos & wishes",
     "empty": "Waiting for the first memory…",
     "fullscreen": "Full screen",
-    "by": "by {name}"
+    "by": "by {name}",
+    "settings": "Settings",
+    "close": "Close",
+    "layout": "Layout",
+    "layoutSingle": "One at a time",
+    "layoutCollage": "Collage",
+    "layoutFilm": "Film strip",
+    "layoutMosaic": "Mosaic",
+    "frame": "Print frame",
+    "names": "Show guest names",
+    "rail": "QR & wishes panel",
+    "wishes": "Latest wishes",
+    "railEmpty": "No wishes yet",
+    "emptyMedia": "Waiting for the first photo…",
+    "qrAlt": "QR code to share a memory"
   },
   "moderation": {
     "approve": "Approve",

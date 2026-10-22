@@ -1,10 +1,31 @@
 # Handoff: where to continue
 
-Last updated: 2026-10-21. Read `CLAUDE.md` (or `AGENTS.md`) and `playbook.md` first, then start with the `majlis-workflow` skill.
+Last updated: 2026-10-22. Read `CLAUDE.md` (or `AGENTS.md`) and `playbook.md` first, then start with the `majlis-workflow` skill.
 
 ## State
 
-Phases 0 to 5, 7 and 8a are done (8a on branch `feat/infra-hardening` until it is merged). 8a adds the retention purge (hourly in-process and `POST /api/cron/purge`), the Postgres `RateLimit` table, `/privacy` and `/terms`, security headers and `/api/health`; see `docs/specs/phase-8-hardening.md`. Checks on 2026-10-21: 205 unit tests and 26 e2e tests all passing, including the voice test (`media.spec.ts`), which passed this time; see Gotchas. The legal pages still show placeholders in `src/lib/legal.ts` (`[NAMA SYARIKAT]`, `[EMEL]`, `[ALAMAT]`): fill them and get a legal review before launch.
+Phases 0 to 5, 7 and 8a are done. 8a adds the retention purge (hourly in-process and `POST /api/cron/purge`), the Postgres `RateLimit` table, `/privacy` and `/terms`, security headers and `/api/health`; see `docs/specs/phase-8-hardening.md`. Checks on 2026-10-21: 205 unit tests and 26 e2e tests all passing. The legal pages still show placeholders in `src/lib/legal.ts` (`[NAMA SYARIKAT]`, `[EMEL]`, `[ALAMAT]`): fill them and get a legal review before launch.
+
+## Sedetik-inspired changes (decided 2026-10-22)
+
+The developer took ideas from sedetik.com, a Malaysian competitor, as six separate changes, low-risk first. Each gets its own spec, plan and branch. Borrow ideas, not their copy or design.
+
+| Change | Branch | State |
+| --- | --- | --- |
+| A Slideshow layouts (collage, film strip, mosaic), print frame, guest-name toggle, QR & wishes panel, filtered slideshow stream, signed-URL refresh fix | `feat/media-slideshow-layouts` | implemented; see `docs/specs/slideshow-layouts.md` and `docs/plans/slideshow-layouts.md` |
+| B More printable QR designs (table card, guest card, doorgift sticker) and a QR placement guide; move the stand PDF's hard-coded copy into `messages/` | — | next |
+| C E-card: opening animation, parking and places to stay, RSVP wish carousel (needs RSVP moderation: migration and privacy review) | — | not started |
+| D Free plan accepts unlimited uploads but shows the host only the latest N until upgrade (plan-contract change; `payments-guard`) | — | not started |
+| E Sub-events (Nikah, Sanding, Bertandang) under one gallery, with tabs (migration across uploads, wishes, gallery, stream) | — | not started |
+| F Marketing site: landing, features, pricing from the `Plan` table, public example card and gallery, FAQ, privacy and terms (overlaps phase 8) | — | not started |
+
+Change A notes:
+
+- The venue slideshow reads `layout` (`single`, `collage`, `film`, `mosaic`), `frame`, `names` and `rail` from its URL, and the Settings dialog rewrites them with `history.replaceState`. Nothing is stored on the server, so the dashboard link always opens the defaults.
+- The slideshow listens on `/api/events/{id}/stream?view=slideshow`, which filters like the guest stream (visible items only, no original links) but never sends "closed".
+- Fixed a bug that was on `main`: the 20-minute signed-URL refresh never ran, because its effect restarted on every slide change, so media broke after an hour. An e2e test with Playwright's clock covers it.
+- All slideshow behaviour is a pure reducer in `src/components/slideshow/state.ts`, unit-tested; the components only render it and run the timers.
+- Not checked by eye yet: the smoothness of the film strip and rail scrolling, and a smart-TV browser.
 
 | Phase | State |
 | --- | --- |
@@ -43,10 +64,11 @@ Sign in: any email on `/signin`; the magic link is printed in the server log and
 - Do not run `next dev` and `next build` at the same time (shared `.next/`). Stop old `next start` processes before `npm run test:e2e`, or Playwright reuses a stale server.
 - An installed PostgreSQL on port 5432 is fine; the embedded one uses 5433. If 5433 is taken (on the 2026-10-21 machine it was another project's Docker container), set another port in `DATABASE_URL` in `.env`, for example 5434.
 - Your npm version decides the lockfile shape: npm 10 drops the `libc` fields that npm 11 writes into `package-lock.json`. Do not commit that churn; `git checkout package-lock.json` after `npm install`.
-- `tests/e2e/media.spec.ts` (voice message) was flaky on a fresh Playwright Chromium download (`chromium_headless_shell-1248`): "Merakam…" never appeared after "Mula rakam", also on `main` at 33b2ab1, so it is the fake microphone in that browser build, not app code. It passed on 2026-10-21 in the 8a worktree; if it fails again, suspect the browser build first.
+- `tests/e2e/media.spec.ts` (voice message) was flaky on a fresh Playwright Chromium download (`chromium_headless_shell-1248`): "Merakam…" never appeared after "Mula rakam", also on `main` at 33b2ab1, so it is the fake microphone in that browser build, not app code. It passed on 2026-10-21 in the 8a worktree and on every run on `feat/media-slideshow-layouts`; if it fails again, suspect the browser build first.
 - A fresh worktree needs `npm install` (not `npm ci`, with npm 10), then `git checkout package-lock.json`. Run `npx prisma generate` if typecheck says the Prisma client is stale.
 - The first start after migrating `hardening` purges any local event already past its `purgeAt` (files and guest rows deleted, event kept as `ARCHIVED`).
 - E2E setup: `tests/e2e/db.ts` is a Prisma fixture (reads `.env`), and `playwright.config.ts` sets `CRON_SECRET` for the test server. A stale `next start` on port 3100 started without `CRON_SECRET` makes the cron e2e return 404.
+- **One local database for every branch:** every worktree's `.env` points at the same `DATABASE_URL`. A branch with a newer migration changes the shared database for everyone. Before e2e on a branch with different migrations, give the worktree its own database name in `DATABASE_URL` (then `npx prisma migrate dev` and `npx prisma db seed`). Never reset the shared one without asking.
 - Admins are read-only on host dashboards (they can view, not change or export); every admin change goes through `/admin` and is in the audit log.
 - npm 11 blocks install scripts: new packages with install scripts need `npm approve-scripts <pkg>` (stored in `allowScripts` in `package.json`).
 - Read `NEXT_PUBLIC_APP_URL` through `env()` in server code, never `process.env.NEXT_PUBLIC_*` (frozen at build time).

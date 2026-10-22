@@ -3,7 +3,7 @@ import type { GalleryItem } from "@/server/gallery/items";
 // In-process publish/subscribe for live galleries and the slideshow. One server process locally;
 // with several instances later, swap this for Postgres LISTEN/NOTIFY or Redis behind the same API.
 
-// "closed" tells guest streams to end because the event was suspended; hosts never see it.
+// "closed" tells guest streams to end because the event was suspended; hosts and the slideshow never get it.
 export type BusMessage = { type: "item"; item: GalleryItem } | { type: "remove"; id: string } | { type: "closed" };
 type Listener = (message: BusMessage) => void;
 
@@ -44,7 +44,12 @@ export function toGuestMessage(message: BusMessage): BusMessage {
   return message.item.type === "upload" ? { type: "item", item: { ...message.item, originalUrl: null } } : message;
 }
 
-/** The host stream and the slideshow keep running when an event is suspended, so they never get "closed". */
+/** The host stream keeps running when an event is suspended, so it never gets "closed" (the slideshow uses `toSlideshowMessage`). */
 export function toHostMessage(message: BusMessage): BusMessage | null {
   return message.type === "closed" ? null : message;
+}
+
+/** The venue slideshow is public-facing: guest filtering (no originals, hidden items removed) minus "closed". */
+export function toSlideshowMessage(message: BusMessage): BusMessage | null {
+  return message.type === "closed" ? null : toGuestMessage(message);
 }

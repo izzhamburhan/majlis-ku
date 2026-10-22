@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 const MAIL_LOG = join(process.cwd(), ".data", "dev-mail.log");
 
@@ -42,4 +42,23 @@ export async function createEventAs(page: Page, email: string, title = "Majlis U
   await page.waitForURL(/\/dashboard\/events\/[a-z0-9]+$/);
   const url = (await page.getByTestId("event-url").textContent())!.trim();
   return { eventId: page.url().split("/").pop()!, slug: new URL(url).pathname.slice(1) };
+}
+
+export const SLUG = "demo-aisyah-daniel"; // seeded on the Premium plan
+
+export async function joinAsGuest(page: Page, name: string) {
+  await page.goto(`/${SLUG}`);
+  const nameBox = page.getByPlaceholder("cth. Mak Cik Kiah");
+  if (await nameBox.isVisible()) {
+    await nameBox.fill(name);
+    await page.getByRole("button", { name: "Teruskan" }).click();
+  }
+  await expect(page.getByText(`Hai, ${name}!`)).toBeVisible();
+}
+
+export async function openDemoEvent(host: Page) {
+  await signInAs(host, "demo.host@majlisku.test");
+  await host.getByRole("link", { name: /Aisyah & Daniel/ }).first().click();
+  await host.waitForURL(/\/dashboard\/events\/[a-z0-9]+$/);
+  return host.url().split("/").pop()!;
 }
