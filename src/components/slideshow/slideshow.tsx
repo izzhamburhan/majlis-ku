@@ -8,6 +8,7 @@ import { CollageLayout, FilmLayout, MosaicLayout, Spotlight } from "./layouts";
 import { Framed, mediaFit, Photo } from "./photo";
 import { Rail } from "./rail";
 import { SettingsDialog, type SettingsLabels } from "./settings-dialog";
+import { PhotobookView } from "./photobook-view";
 import { initShow, mainItems, railWishes, showReducer } from "./state";
 
 const SLIDE_MS = 7000;
@@ -17,12 +18,27 @@ const SPOTLIGHT_MS = 5000;
 const FILM_STEP_MS = 4000; // film step with reduced motion
 const TICK_MS = { collage: 4000, mosaic: 3000 } as const;
 
-type Labels = SettingsLabels & { scan: string; empty: string; fullscreen: string; by: string; wishes: string; railEmpty: string; emptyMedia: string; qrAlt: string };
+type Labels = SettingsLabels & {
+  scan: string;
+  empty: string;
+  fullscreen: string;
+  by: string;
+  wishes: string;
+  railEmpty: string;
+  emptyMedia: string;
+  qrAlt: string;
+  photobookFrom: string;
+  photobookFromAnon: string;
+};
+
+// The Photobook draws its own spreads from the item list; underneath, the reducer runs as "single" to keep items live.
+const reducerLayout = (layout: SlideshowOptions["layout"]) => (layout === "photobook" ? "single" : layout);
 
 export function Slideshow({
   eventId,
   hostNames,
   themeColor,
+  dateLabel,
   initialItems,
   options: initialOptions,
   qrSrc,
@@ -32,13 +48,16 @@ export function Slideshow({
   eventId: string;
   hostNames: string;
   themeColor: string;
+  dateLabel: string;
   initialItems: GalleryItem[];
   options: SlideshowOptions;
   qrSrc: string;
   shareUrl: string;
   labels: Labels;
 }) {
-  const [state, dispatch] = useReducer(showReducer, initialItems, (items) => initShow(items, initialOptions));
+  const [state, dispatch] = useReducer(showReducer, initialItems, (items) =>
+    initShow(items, { layout: reducerLayout(initialOptions.layout), rail: initialOptions.rail }),
+  );
   const [options, setOptions] = useState(initialOptions);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsButton = useRef<HTMLButtonElement>(null);
@@ -47,7 +66,8 @@ export function Slideshow({
   const [reduced, setReduced] = useState(false);
 
   const main = useMemo(() => mainItems(state), [state.items, state.rail]); // eslint-disable-line react-hooks/exhaustive-deps -- mainItems reads only these two fields
-  const single = state.layout === "single";
+  const photobook = options.layout === "photobook";
+  const single = state.layout === "single" && !photobook;
   const item = single && !state.closed ? (main.find((i) => i.id === state.single) ?? main[0]) : undefined;
   const spotlit = state.spotlight === null ? undefined : state.items.find((i) => i.id === state.spotlight);
   const wishes = useMemo(() => railWishes(state), [state.items, state.rail]); // eslint-disable-line react-hooks/exhaustive-deps -- same: stable array for the rail effects
@@ -143,7 +163,7 @@ export function Slideshow({
   function change(next: SlideshowOptions) {
     history.replaceState(null, "", location.pathname + optionsQuery(next));
     setOptions(next);
-    if (next.layout !== options.layout || next.rail !== options.rail) dispatch({ type: "setOptions", layout: next.layout, rail: next.rail });
+    if (reducerLayout(next.layout) !== state.layout || next.rail !== options.rail) dispatch({ type: "setOptions", layout: reducerLayout(next.layout), rail: next.rail });
   }
 
   function closeSettings() {
@@ -155,6 +175,41 @@ export function Slideshow({
   const print = options.frame === "print";
   const showName = options.names && !print && item?.type === "upload" ? labels.by.replace("{name}", item.guestName) : null;
   const buttonClass = "rounded-full bg-white/10 px-4 py-2 text-sm opacity-60 hover:opacity-100";
+
+  const controls = (
+    <>
+      <button ref={settingsButton} type="button" onClick={() => setSettingsOpen(true)} className={buttonClass} style={{ cursor: "pointer" }}>
+        {labels.settings}
+      </button>
+      <button
+        type="button"
+        onClick={() => void document.documentElement.requestFullscreen?.().catch(() => undefined)}
+        className={buttonClass}
+        style={{ cursor: "pointer" }}
+      >
+        {labels.fullscreen}
+      </button>
+    </>
+  );
+
+  if (photobook) {
+    return (
+      <div className="fixed inset-0 overflow-hidden" style={{ cursor: "none" }} data-testid="slideshow" data-layout="photobook">
+        <PhotobookView
+          items={state.closed ? [] : state.items}
+          hostNames={hostNames}
+          dateLabel={dateLabel}
+          names={options.names}
+          reduced={reduced}
+          qrSrc={qrSrc}
+          shareUrl={shareUrl}
+          labels={{ scan: labels.scan, qrAlt: labels.qrAlt, empty: labels.empty, from: labels.photobookFrom, fromAnon: labels.photobookFromAnon }}
+        />
+        <div className="absolute bottom-10 left-12 z-30 flex gap-2 text-[var(--sk-ivory)]">{controls}</div>
+        {settingsOpen ? <SettingsDialog options={options} labels={labels} onChange={change} onClose={closeSettings} /> : null}
+      </div>
+    );
+  }
 
   return (
     <div

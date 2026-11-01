@@ -40,6 +40,10 @@
     "checkEmailTitle": "Semak e-mel anda",
     "checkEmailBody": "Kami telah menghantar pautan log masuk. Buka pautan itu pada peranti ini.",
     "devHint": "Mod pembangunan: pautan dicetak dalam log pelayan.",
+    "devTitle": "Masuk terus (pembangunan sahaja)",
+    "devHelp": "Tiada e-mel diperlukan. Pilihan ini tidak wujud di laman sebenar.",
+    "devAsHost": "Masuk sebagai tuan rumah demo",
+    "devAsAdmin": "Masuk sebagai admin",
     "error": "Log masuk gagal. Sila cuba lagi."
   },
   "dashboard": {
@@ -117,6 +121,9 @@
     "guests": "Semua tetamu yang ada pautan",
     "approval": "Luluskan dahulu sebelum dipaparkan",
     "approvalHelp": "Muat naik baharu disembunyikan sehingga anda luluskan.",
+    "shots": "Had gambar setiap tetamu",
+    "shotsHelp": "Mod kamera pakai buang: setiap tetamu boleh ambil sebanyak ini (1 hingga 100). Biarkan kosong untuk tanpa had. Video, suara dan ucapan tidak dikira.",
+    "shotsUnlimited": "Tanpa had",
     "pin": "PIN majlis",
     "pinHelp": "4 hingga 8 digit. Tetamu perlu masukkan PIN ini. Biarkan kosong untuk kekalkan.",
     "pinSet": "PIN sedang aktif.",
@@ -202,6 +209,7 @@
       "gallery_not_in_plan": "Galeri belum dibuka untuk majlis ini.",
       "video_not_in_plan": "Video tidak termasuk dalam pelan majlis ini.",
       "rate_limited": "Terlalu cepat. Tunggu sebentar.",
+      "shots_used_up": "Filem anda sudah habis.",
       "generic": "Ralat. Sila cuba lagi."
     },
     "comingSoon": "Akan datang",
@@ -218,7 +226,13 @@
     "voiceNoMic": "Rakaman tidak tersedia pada pelayar ini. Pilih fail audio.",
     "voiceDenied": "Akses mikrofon ditolak. Benarkan mikrofon atau pilih fail audio.",
     "voicePick": "Pilih fail audio",
-    "processingNote": "Ia sedang diproses dan akan muncul dalam galeri sebentar lagi."
+    "processingNote": "Ia sedang diproses dan akan muncul dalam galeri sebentar lagi.",
+    "shutter": "Ambil gambar",
+    "fromGallery": "Pilih dari galeri",
+    "shotsLeft": "{left} / {limit} keping lagi",
+    "shotsOut": "Filem anda sudah habis",
+    "shotsSkipped": "{count, plural, other {# gambar}} tidak dihantar kerana filem sudah habis.",
+    "myPhotos": "Gambar saya"
   },
   "admin": {
     "forbiddenTitle": "Akses ditolak",
@@ -443,7 +457,8 @@
   },
   "event": {
     "notFound": "Majlis tidak dijumpai",
-    "welcome": "Selamat datang"
+    "welcome": "Selamat datang",
+    "counts": "{photos, plural, other {# gambar}} · {guests, plural, other {# tetamu}}"
   },
   "errors": {
     "notFoundTitle": "Halaman tidak dijumpai",
@@ -463,6 +478,9 @@
     "layoutCollage": "Kolaj",
     "layoutFilm": "Jalur filem",
     "layoutMosaic": "Mozek",
+    "layoutPhotobook": "Buku kenangan",
+    "photobookFrom": "Kenangan daripada {name}",
+    "photobookFromAnon": "Sebuah kenangan",
     "frame": "Bingkai cetak",
     "names": "Tunjuk nama tetamu",
     "rail": "Panel QR & ucapan",

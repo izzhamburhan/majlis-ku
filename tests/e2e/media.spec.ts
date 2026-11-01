@@ -6,7 +6,7 @@ import { promisify } from "node:util";
 import { expect, test } from "@playwright/test";
 import ffmpegPath from "ffmpeg-static";
 import sharp from "sharp";
-import { joinAsGuest, openDemoEvent } from "./helpers";
+import { agreeToConsent, joinAsGuest, openDemoEvent } from "./helpers";
 
 const run = promisify(execFile);
 
@@ -25,9 +25,8 @@ test("guest sends a video and a voice message; both are processed and shown to t
   await joinAsGuest(guest, guestName);
 
   // Video
+  await agreeToConsent(guest);
   await guest.getByRole("button", { name: "Video" }).click();
-  const consent = guest.getByLabel("Saya faham dan bersetuju");
-  if (!(await consent.isChecked())) await consent.check();
   await guest.getByTestId("video-input").setInputFiles({ name: "majlis.mp4", mimeType: "video/mp4", buffer: await testVideo() });
   await expect(guest.getByRole("heading", { name: "Terima kasih!" })).toBeVisible({ timeout: 30_000 });
   await expect(guest.getByText("Ia sedang diproses")).toBeVisible();
@@ -78,9 +77,7 @@ test("the host gallery and the slideshow receive a new photo live", async ({ bro
   const guestContext = await browser.newContext();
   const guest = await guestContext.newPage();
   await joinAsGuest(guest, guestName);
-  await guest.getByRole("button", { name: "Gambar" }).click();
-  const consent = guest.getByLabel("Saya faham dan bersetuju");
-  if (!(await consent.isChecked())) await consent.check();
+  await agreeToConsent(guest);
   const photo = await sharp({ create: { width: 800, height: 600, channels: 3, background: "#3f6b4f" } }).jpeg().toBuffer();
   await guest.getByTestId("photo-input").setInputFiles({ name: "live.jpg", mimeType: "image/jpeg", buffer: photo });
   await expect(guest.getByRole("heading", { name: "Terima kasih!" })).toBeVisible({ timeout: 30_000 });

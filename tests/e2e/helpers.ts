@@ -56,6 +56,12 @@ export async function joinAsGuest(page: Page, name: string) {
   await expect(page.getByText(`Hai, ${name}!`)).toBeVisible();
 }
 
+/** The guest menu asks for consent once, before any upload or wish; the choice is remembered on the device. */
+export async function agreeToConsent(page: Page) {
+  const consent = page.getByLabel("Saya faham dan bersetuju");
+  if (!(await consent.isChecked())) await consent.check();
+}
+
 export async function openDemoEvent(host: Page) {
   await signInAs(host, "demo.host@majlisku.test");
   await host.getByRole("link", { name: /Aisyah & Daniel/ }).first().click();

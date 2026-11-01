@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import sharp from "sharp";
-import { signInAs } from "./helpers";
+import { agreeToConsent, signInAs } from "./helpers";
 
 async function photo(color: string) {
   return sharp({ create: { width: 1200, height: 900, channels: 3, background: color } })
@@ -47,8 +47,7 @@ test("host creates an event; a guest adds a photo and a wish; the host sees both
   await guest.getByRole("button", { name: "Teruskan" }).click();
   await expect(guest.getByText("Hai, Mak Cik Kiah!")).toBeVisible();
 
-  await guest.getByRole("button", { name: "Gambar" }).click();
-  await guest.getByLabel("Saya faham dan bersetuju").check();
+  await agreeToConsent(guest);
   await guest.getByTestId("photo-input").setInputFiles([
     { name: "satu.jpg", mimeType: "image/jpeg", buffer: await photo("#c9a227") },
     { name: "dua.jpg", mimeType: "image/jpeg", buffer: await photo("#7a1f2b") },

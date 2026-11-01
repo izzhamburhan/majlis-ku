@@ -1,6 +1,6 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import sharp from "sharp";
-import { createEventAs, joinAsGuest, openDemoEvent, SLUG } from "./helpers";
+import { agreeToConsent, createEventAs, joinAsGuest, openDemoEvent, SLUG } from "./helpers";
 
 const EMPTY = "Menunggu kenangan pertama…";
 
@@ -28,21 +28,15 @@ async function guestSends(browser: Browser, name: string, send: (guest: Page) =>
   await context.close();
 }
 
-const agree = async (guest: Page) => {
-  const consent = guest.getByLabel("Saya faham dan bersetuju");
-  if (!(await consent.isChecked())) await consent.check();
-};
-
 const sendWish = (text: string) => async (guest: Page) => {
+  await agreeToConsent(guest);
   await guest.getByRole("button", { name: "Ucapan" }).click();
-  await agree(guest);
   await guest.getByLabel("Ucapan anda").fill(text);
   await guest.getByRole("button", { name: "Hantar ucapan" }).click();
 };
 
 const sendPhoto = (width: number, height: number) => async (guest: Page) => {
-  await guest.getByRole("button", { name: "Gambar" }).click();
-  await agree(guest);
+  await agreeToConsent(guest);
   const buffer = await sharp({ create: { width, height, channels: 3, background: "#3f6b4f" } }).jpeg().toBuffer();
   await guest.getByTestId("photo-input").setInputFiles({ name: "slide.jpg", mimeType: "image/jpeg", buffer });
 };

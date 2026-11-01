@@ -18,6 +18,396 @@ body {
   color: var(--color-ink);
 }
 
+/* ---------- Songket world (guest page and Photobook TV) ----------
+   Variables come from songketVars(themeColor) on the page wrapper. */
+
+.songket {
+  background-color: var(--sk-ground);
+  /* Woven ground: fine warp and weft threads, barely visible. */
+  background-image:
+    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.028) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.09) 0 1px, transparent 1px 5px);
+  color: var(--sk-ivory);
+  font-family: var(--font-sk-ui), ui-sans-serif, system-ui, sans-serif;
+  caret-color: var(--sk-gold-light);
+  accent-color: var(--sk-gold);
+}
+
+.songket ::selection {
+  background: var(--sk-gold);
+  color: var(--sk-ground-deep);
+}
+
+.songket :focus-visible {
+  outline: 2px solid var(--sk-gold-light);
+  outline-offset: 3px;
+}
+
+.sk-display {
+  font-family: var(--font-sk-display), ui-serif, Georgia, serif;
+  letter-spacing: 0.01em;
+}
+
+.sk-pen {
+  font-family: var(--font-sk-pen), cursive;
+}
+
+/* Pucuk rebung: the bamboo-shoot triangles of a songket border, gold weft on the deep ground. */
+.sk-band {
+  height: 14px;
+  background-color: var(--sk-ground-deep);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='14' viewBox='0 0 28 14'%3E%3Cpath d='M0 14 L7 1 L14 14 Z' fill='%23c9a24a'/%3E%3Cpath d='M14 0 L21 13 L28 0 Z' fill='%23ecd394' fill-opacity='.55'/%3E%3Cpath d='M7 9 L9 11.5 L7 14 L5 11.5 Z' fill='%232b1402' fill-opacity='.55'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 28px 14px;
+}
+
+.sk-band-lg {
+  height: 22px;
+  background-size: 44px 22px;
+}
+
+/* Thin gold rule with a small woven diamond in the middle. */
+.sk-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--sk-gold-light);
+}
+
+.sk-rule::before,
+.sk-rule::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, var(--sk-gold) 30%, var(--sk-gold) 70%, transparent);
+}
+
+/* Gerbang: the arched doorway the couple walks through. Two gold edges, like a foil-stamped card. */
+.sk-arch {
+  border-radius: 50% 50% 14px 14px / 34% 34% 14px 14px;
+  box-shadow:
+    0 0 0 2px var(--sk-gold),
+    0 0 0 7px var(--sk-ground),
+    0 0 0 8px rgb(201 162 74 / 0.55),
+    0 24px 48px -12px rgb(0 0 0 / 0.55);
+}
+
+/* The shutter: a gold ring around a deep lens. */
+.sk-shutter {
+  background:
+    radial-gradient(circle at 50% 50%, var(--sk-ground-lift) 0 54%, transparent 55%),
+    conic-gradient(from 210deg, var(--sk-gold), var(--sk-gold-light), var(--sk-gold), #a8822f, var(--sk-gold));
+  box-shadow:
+    0 0 0 6px var(--sk-ground),
+    0 0 0 7px rgb(201 162 74 / 0.45),
+    0 18px 36px -10px rgb(0 0 0 / 0.6);
+  transition: transform 160ms cubic-bezier(0.2, 0.9, 0.3, 1.2), box-shadow 160ms ease-out;
+}
+
+.sk-shutter:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.sk-shutter:disabled {
+  filter: grayscale(0.7) brightness(0.8);
+}
+
+/* Entry: the page settles once, from already-visible content. */
+@keyframes sk-rise {
+  from {
+    opacity: 0.001;
+    transform: translateY(10px);
+  }
+}
+
+.sk-rise {
+  animation: sk-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ---------- Photobook (TV) ---------- */
+
+.pb-paper {
+  background-color: #f4ebd8;
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgb(255 255 255 / 0.5), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .27 0 0 0 0 .18 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  color: #2a211a;
+}
+
+/* The spine: pages darken towards the gutter. */
+.pb-left {
+  box-shadow: inset -40px 0 50px -30px rgb(60 40 20 / 0.35);
+}
+
+.pb-right {
+  box-shadow: inset 40px 0 50px -30px rgb(60 40 20 / 0.35);
+}
+
+.pb-print {
+  background: #fdfbf6;
+  box-shadow:
+    0 1px 1px rgb(0 0 0 / 0.08),
+    0 12px 28px -8px rgb(40 25 10 / 0.45);
+}
+
+/* Gold photo corners holding the print on the page. */
+.pb-corner {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, var(--sk-gold-light), var(--sk-gold) 60%, #9c7a2c);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.25));
+}
+
+@keyframes pb-turn {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(-180deg);
+  }
+}
+
+.pb-leaf {
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  animation: pb-turn 1400ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.pb-face {
+  backface-visibility: hidden;
+}
+
+.pb-back {
+  transform: rotateY(180deg);
+}
+
+@keyframes pb-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.pb-fade {
+  animation: pb-fade 900ms ease-out;
+}
+
+/* ---------- Photobook album: the physical object ---------- */
+
+/* Hard cover bound in songket cloth: the host's colour, woven, with a gold-thread edge. */
+.pb-cover {
+  border-radius: 14px;
+  background-color: var(--sk-ground-deep);
+  background-image:
+    radial-gradient(ellipse at 28% 18%, rgb(255 255 255 / 0.09), transparent 55%),
+    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.04) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.2) 0 1px, transparent 1px 4px);
+  box-shadow:
+    inset 0 0 0 2px rgb(201 162 74 / 0.6),
+    inset 0 0 0 9px var(--sk-ground-deep),
+    inset 0 0 0 10px rgb(201 162 74 / 0.35),
+    0 60px 90px -36px rgb(0 0 0 / 0.9),
+    0 22px 34px -16px rgb(0 0 0 / 0.65);
+}
+
+/* Brass corner guards on the cover. */
+.pb-guard {
+  position: absolute;
+  z-index: 1;
+  width: 58px;
+  height: 58px;
+  background: linear-gradient(135deg, var(--sk-gold-light), var(--sk-gold) 50%, #8a6a22);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  border-top-left-radius: 14px;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.45));
+}
+
+/* The page block: sheets stacked under the open spread show at both fore-edges. */
+.pb-block {
+  border-radius: 3px;
+  box-shadow:
+    -2px 2px 0 #e9ddc4,
+    -4px 3px 0 #d3c3a2,
+    -6px 5px 0 #ebdfc7,
+    -8px 6px 0 #c9b893,
+    -10px 8px 0 #e2d4b8,
+    -12px 9px 0 #b9a581,
+    2px 2px 0 #e9ddc4,
+    4px 3px 0 #d3c3a2,
+    6px 5px 0 #ebdfc7,
+    8px 6px 0 #c9b893,
+    10px 8px 0 #e2d4b8,
+    12px 9px 0 #b9a581,
+    0 24px 30px -18px rgb(0 0 0 / 0.6);
+}
+
+/* Pages curve down into the binding; gold thread stitches the signature. */
+.pb-gutter {
+  width: 120px;
+  background:
+    repeating-linear-gradient(180deg, rgb(201 162 74 / 0.85) 0 9px, transparent 9px 22px) center / 2px 100% no-repeat,
+    linear-gradient(90deg, transparent, rgb(70 48 26 / 0.16) 30%, rgb(40 26 12 / 0.42) 49%, rgb(255 255 255 / 0.18) 50.5%, rgb(40 26 12 / 0.32) 52%, rgb(70 48 26 / 0.14) 70%, transparent);
+}
+
+/* Satin ribbon bookmark in the host's colour, gold thread at both edges, cut in a swallowtail below the book. */
+.pb-ribbon {
+  position: absolute;
+  z-index: 30;
+  top: 2.4%;
+  left: calc(50% + 30px);
+  width: 22px;
+  height: calc(97.6% + 58px);
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 0) 20%, rgb(255 255 255 / 0.22) 45%, rgb(255 255 255 / 0) 70%),
+    linear-gradient(90deg, var(--sk-gold) 0 2px, var(--sk-ground-lift) 2px calc(100% - 2px), var(--sk-gold) calc(100% - 2px));
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 16px), 0 100%);
+  filter: drop-shadow(1px 3px 3px rgb(0 0 0 / 0.4));
+}
+
+/* Gilded frame (bingkai) with an ivory mat, hung on the page. */
+.pb-gilt {
+  position: relative;
+  padding: 2.2cqh;
+  background: linear-gradient(135deg, #f3dc95, #b98b30 26%, #f7e6aa 48%, #a57826 70%, #e8c870);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.45),
+    inset 0 0 0 0.6cqh rgb(120 85 25 / 0.35),
+    0 2.6cqh 3.6cqh -1.4cqh rgb(40 25 10 / 0.65),
+    0 0.6cqh 1cqh rgb(40 25 10 / 0.25);
+}
+
+.pb-mat {
+  padding: 2.6cqh;
+  background: #f8f2e4;
+  box-shadow:
+    inset 0 0.3cqh 0.6cqh rgb(60 40 20 / 0.28),
+    inset 0 0 0 1px rgb(120 90 50 / 0.2);
+}
+
+.pb-mat > div {
+  box-shadow: 0 0 0 1px rgb(80 60 30 / 0.25);
+}
+
+/* Washi tape printed with the pucuk rebung band, torn at both ends. */
+.pb-tape {
+  position: absolute;
+  z-index: 2;
+  width: 13cqh;
+  height: 3.6cqh;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='9'%3E%3Cpath d='M0 9 L4 1 L8 9 Z' fill='%23c9a24a' fill-opacity='.75'/%3E%3Cpath d='M8 0 L12 8 L16 0 Z' fill='%23ecd394' fill-opacity='.5'/%3E%3C/svg%3E") center / auto 55% repeat-x,
+    rgb(236 211 148 / 0.55);
+  clip-path: polygon(3% 0, 97% 4%, 100% 25%, 96% 50%, 100% 78%, 97% 100%, 2% 96%, 0 70%, 4% 46%, 0 20%);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+  mix-blend-mode: multiply;
+}
+
+/* The wish card: an exercise-book sheet with a red margin, as at every kenduri guestbook table. */
+.pb-note {
+  --line: 6.2cqh;
+  background-color: #fbf6ea;
+  background-image:
+    linear-gradient(90deg, transparent 9%, rgb(200 70 60 / 0.35) 9%, rgb(200 70 60 / 0.35) calc(9% + 1px), transparent calc(9% + 1px)),
+    repeating-linear-gradient(180deg, transparent 0 calc(var(--line) - 1px), rgb(110 135 170 / 0.28) calc(var(--line) - 1px) var(--line));
+  background-position: 0 4cqh;
+  box-shadow:
+    0 0.4cqh 0.6cqh rgb(40 25 10 / 0.18),
+    0 2.4cqh 3cqh -1.6cqh rgb(40 25 10 / 0.5);
+}
+
+/* Cop: a gold rubber stamp with the clove flower and the date. */
+.pb-cop {
+  display: flex;
+  width: 15cqh;
+  height: 15cqh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 0.4cqh solid rgb(201 162 74 / 0.8);
+  border-radius: 50%;
+  color: #9c7a2c;
+  rotate: -12deg;
+  box-shadow: inset 0 0 0 0.8cqh rgb(201 162 74 / 0.18);
+  mix-blend-mode: multiply;
+}
+
+/* A pressed flower dried into the paper. */
+.pb-pressed {
+  color: #b08560;
+  opacity: 0.38;
+  rotate: -18deg;
+  mix-blend-mode: multiply;
+}
+
+.pb-folio {
+  font-family: var(--font-sk-display), serif;
+  font-size: 1.8cqh;
+  letter-spacing: 0.2em;
+  color: #8a7660;
+}
+
+/* Light falls off the turning leaf, and its shadow sweeps the page beneath. */
+@keyframes pb-shade-front {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes pb-shade-back {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pb-cast {
+  0% {
+    opacity: 0;
+  }
+  55% {
+    opacity: 0;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.pb-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pb-shade-front {
+  background: linear-gradient(90deg, rgb(0 0 0 / 0.32), rgb(0 0 0 / 0.06) 45%, rgb(255 255 255 / 0.12) 85%, transparent);
+  animation: pb-shade-front 1400ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.pb-shade-back {
+  background: linear-gradient(270deg, rgb(0 0 0 / 0.32), rgb(0 0 0 / 0.06) 45%, transparent);
+  animation: pb-shade-back 1400ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.pb-cast {
+  background: linear-gradient(270deg, rgb(30 18 8 / 0.45), transparent 60%);
+  animation: pb-cast 1400ms ease-in-out forwards;
+}
+
 /* Slideshow motion. Reduced motion turns all of it off (the film steps on a timer instead). */
 @keyframes film-scroll {
   to {
@@ -83,7 +473,12 @@ body {
   .film-track-1,
   .rail-scroll,
   .collage-drop,
-  .tile-fade {
+  .tile-fade,
+  .sk-rise,
+  .pb-leaf,
+  .pb-shade-front,
+  .pb-shade-back,
+  .pb-cast {
     animation: none !important;
   }
 }

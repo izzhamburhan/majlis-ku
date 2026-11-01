@@ -2,7 +2,7 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 import sharp from "sharp";
 import { CRON_SECRET } from "./cron-secret";
 import { prisma } from "./db";
-import { createEventAs, signInAs } from "./helpers";
+import { agreeToConsent, createEventAs, signInAs } from "./helpers";
 
 const DESKTOP = { viewport: { width: 1280, height: 900 } };
 const bearer = (secret: string) => ({ Authorization: `Bearer ${secret}` });
@@ -18,8 +18,7 @@ async function guestSendsPhotoAndWish(browser: Browser, slug: string): Promise<v
   await guest.goto(`/${slug}`);
   await guest.getByPlaceholder("cth. Mak Cik Kiah").fill("Tetamu Purge");
   await guest.getByRole("button", { name: "Teruskan" }).click();
-  await guest.getByRole("button", { name: "Gambar" }).click();
-  await guest.getByLabel("Saya faham dan bersetuju").check();
+  await agreeToConsent(guest);
   const photo = await sharp({ create: { width: 640, height: 480, channels: 3, background: "#d48aa6" } }).jpeg().toBuffer();
   await guest.getByTestId("photo-input").setInputFiles({ name: "a.jpg", mimeType: "image/jpeg", buffer: photo });
   await expect(guest.getByRole("heading", { name: "Terima kasih!" })).toBeVisible({ timeout: 30_000 });

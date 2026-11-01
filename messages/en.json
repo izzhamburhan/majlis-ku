@@ -40,6 +40,10 @@
     "checkEmailTitle": "Check your email",
     "checkEmailBody": "We sent you a sign-in link. Open it on this device.",
     "devHint": "Development mode: the link is printed in the server log.",
+    "devTitle": "Instant sign-in (development only)",
+    "devHelp": "No email needed. This option does not exist on the live site.",
+    "devAsHost": "Sign in as the demo host",
+    "devAsAdmin": "Sign in as admin",
     "error": "Sign-in failed. Please try again."
   },
   "dashboard": {
@@ -117,6 +121,9 @@
     "guests": "Every guest with the link",
     "approval": "Approve before showing",
     "approvalHelp": "New uploads stay hidden until you approve them.",
+    "shots": "Photos per guest",
+    "shotsHelp": "Disposable camera mode: each guest can take this many photos (1 to 100). Leave empty for no limit. Videos, voice notes and wishes do not count.",
+    "shotsUnlimited": "No limit",
     "pin": "Event PIN",
     "pinHelp": "4 to 8 digits. Guests must enter it. Leave empty to keep the current one.",
     "pinSet": "A PIN is active.",
@@ -202,6 +209,7 @@
       "gallery_not_in_plan": "The gallery is not open for this event yet.",
       "video_not_in_plan": "Video is not included in this event's plan.",
       "rate_limited": "Too fast. Please wait a moment.",
+      "shots_used_up": "You have used all your shots.",
       "generic": "Something went wrong. Please try again."
     },
     "comingSoon": "Coming soon",
@@ -218,7 +226,13 @@
     "voiceNoMic": "Recording is not available in this browser. Choose an audio file.",
     "voiceDenied": "Microphone access was denied. Allow it or choose an audio file.",
     "voicePick": "Choose an audio file",
-    "processingNote": "It is being processed and will appear in the gallery shortly."
+    "processingNote": "It is being processed and will appear in the gallery shortly.",
+    "shutter": "Take a photo",
+    "fromGallery": "Choose from gallery",
+    "shotsLeft": "{left} of {limit} shots left",
+    "shotsOut": "You have used all your shots",
+    "shotsSkipped": "{count, plural, one {# photo was} other {# photos were}} not sent: no shots left.",
+    "myPhotos": "My photos"
   },
   "admin": {
     "forbiddenTitle": "Access denied",
@@ -443,7 +457,8 @@
   },
   "event": {
     "notFound": "Event not found",
-    "welcome": "Welcome"
+    "welcome": "Welcome",
+    "counts": "{photos, plural, one {# photo} other {# photos}} · {guests, plural, one {# guest} other {# guests}}"
   },
   "errors": {
     "notFoundTitle": "Page not found",
@@ -463,6 +478,9 @@
     "layoutCollage": "Collage",
     "layoutFilm": "Film strip",
     "layoutMosaic": "Mosaic",
+    "layoutPhotobook": "Photobook",
+    "photobookFrom": "A memory from {name}",
+    "photobookFromAnon": "A memory",
     "frame": "Print frame",
     "names": "Show guest names",
     "rail": "QR & wishes panel",

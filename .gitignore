@@ -42,3 +42,6 @@ npm-debug.log*
 
 # Playwright MCP browser logs and snapshots (also keeps Tailwind from rescanning them)
 .playwright-mcp/
+
+# Impeccable design review captures
+.impeccable/

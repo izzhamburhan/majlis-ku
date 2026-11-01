@@ -226,6 +226,7 @@ model Event {
   defaultLocale     Locale            @default(ms)
   galleryVisibility GalleryVisibility @default(PRIVATE)
   requireApproval   Boolean           @default(false)
+  shotsPerGuest     Int?              // disposable mode: photos each guest may take; null = unlimited
   pinHash           String?           // optional event PIN, hashed
   planId            String
   planActivatedAt   DateTime?

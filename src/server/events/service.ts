@@ -48,6 +48,7 @@ export async function updateEventSettings(eventId: string, settings: EventSettin
   const data: Prisma.EventUpdateManyMutationInput = {
     galleryVisibility: settings.galleryVisibility,
     requireApproval: settings.requireApproval,
+    shotsPerGuest: settings.shotsPerGuest,
   };
   if (settings.pin) data.pinHash = await hashPin(settings.pin);
   else if (settings.clearPin) data.pinHash = null;

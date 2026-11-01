@@ -1,5 +1,7 @@
 import type { ModerationState, Upload, UploadKind, Wish } from "@prisma/client";
+import { env } from "@/lib/env";
 import { MEDIA_URL_TTL_SEC, storage } from "@/server/media/storage";
+import { guestKeyFor } from "./guest-key";
 
 /** What the gallery, the live stream and the slideshow render. Dates become strings over SSE. */
 export type GalleryItem =
@@ -8,6 +10,8 @@ export type GalleryItem =
       id: string;
       kind: UploadKind;
       guestName: string;
+      /** Groups a guest's items (Photobook); absent on items built before it existed. */
+      guestKey?: string | null;
       createdAt: Date | string;
       moderation: ModerationState;
       width: number | null;
@@ -17,7 +21,15 @@ export type GalleryItem =
       displayUrl: string | null;
       originalUrl: string | null;
     }
-  | { type: "wish"; id: string; guestName: string; createdAt: Date | string; moderation: ModerationState; message: string };
+  | {
+      type: "wish";
+      id: string;
+      guestName: string;
+      guestKey?: string | null;
+      createdAt: Date | string;
+      moderation: ModerationState;
+      message: string;
+    };
 
 export type Audience = "host" | "guest";
 
@@ -56,6 +68,7 @@ export async function uploadToItem(upload: Upload, audience: Audience): Promise<
     id: upload.id,
     kind: upload.kind,
     guestName: upload.guestName,
+    guestKey: guestKeyFor(upload.guestId, env().HASH_SALT),
     createdAt: upload.createdAt,
     moderation: upload.moderation,
     width: upload.width,
@@ -72,6 +85,7 @@ export function wishToItem(wish: Wish): GalleryItem {
     type: "wish",
     id: wish.id,
     guestName: wish.guestName,
+    guestKey: guestKeyFor(wish.guestId, env().HASH_SALT),
     createdAt: wish.createdAt,
     moderation: wish.moderation,
     message: wish.message,

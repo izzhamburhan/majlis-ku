@@ -94,6 +94,7 @@ prisma/                  schema.prisma, migrations, seed.ts
 tests/unit/              Vitest
 tests/e2e/               Playwright
 docs/brief.md            the product brief (source of the requirements)
+DESIGN.md                the Songket visual system for guest pages and the Photobook TV (tokens, type, motifs)
 docs/specs/, docs/plans/ one spec and one plan per phase or change
 playbook.md              the process: gates, git rules, validation, Definition of Done
 .claude/skills/          process and guard skills (Codex twins in .codex/skills/)
@@ -116,6 +117,7 @@ scripts/                 worktree-add/cleanup, skills.mjs (sync and parity check
 | 6 Payments and plans | deferred by the developer (plans and limits still enforced) |
 | 7 Admin panel: overview, events (plan change, suspend, delete), users, abuse reports with a guest report form, plans and prices, templates, audit log; admins read-only on host dashboards | done |
 | 8a Local hardening: retention purge job, shared Postgres rate limiter, privacy and terms pages, security headers, `/api/health`, e2e for these | done |
+| Guest flow v2 (`docs/specs/guest-flow-v2.md`): Songket camera-first guest page, disposable shot limit per guest (`Event.shotsPerGuest`), Photobook TV layout (one guest per spread: photobooth print or strip plus their wish). Visual system in `DESIGN.md` | in review |
 | 8b Deployment hardening: Dockerfile, S3/R2 `StorageDriver`, deployment guide, client IP trust behind the proxy, HSTS, PIN guessing across devices (per-IP limit) | next |
 
 ## Commands
@@ -136,7 +138,7 @@ node scripts/skills.mjs sync   # regenerate .codex/skills and .codex/agents
 node scripts/skills.mjs check  # fail if the twins differ
 ```
 
-Sign in locally: enter any email on `/signin`; with `EMAIL_SERVER` empty, the magic link is printed in the `npm run dev` log and appended to `.data/dev-mail.log`. Emails in `ADMIN_EMAILS` (default `admin@majlisku.test`) become admins on sign-in; admin access is checked against the list on every request, so removing an email revokes it. Admins can view any host dashboard but change things only through `/admin`, which writes an audit log.
+Sign in locally: on `/signin`, the **Masuk terus** buttons sign in at once as the demo host or admin (development only: `devLoginAllowed` turns them off in production and when `EMAIL_SERVER` is set). Or enter any email; with `EMAIL_SERVER` empty, the magic link is printed in the `npm run dev` log and appended to `.data/dev-mail.log`. Emails in `ADMIN_EMAILS` (default `admin@majlisku.test`) become admins on sign-in; admin access is checked against the list on every request, so removing an email revokes it. Admins can view any host dashboard but change things only through `/admin`, which writes an audit log.
 
 Try it on a phone on the same Wi-Fi: set `NEXT_PUBLIC_APP_URL` and `AUTH_URL` in `.env` to `http://<your-LAN-IP>:3000`, run `npm run dev -- -H 0.0.0.0`, and scan the QR code from the event page.
 

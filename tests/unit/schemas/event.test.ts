@@ -35,16 +35,29 @@ describe("eventSettingsSchema", () => {
       galleryVisibility: "GUESTS",
       requireApproval: true,
       pin: "1234",
+      shotsPerGuest: null,
     });
     expect(eventSettingsSchema.parse({ galleryVisibility: "PRIVATE", pin: "" })).toEqual({
       galleryVisibility: "PRIVATE",
       requireApproval: false,
       pin: null,
+      shotsPerGuest: null,
     });
   });
 
   it("rejects a short or non-numeric PIN", () => {
     expect(eventSettingsSchema.safeParse({ galleryVisibility: "PRIVATE", pin: "12" }).success).toBe(false);
     expect(eventSettingsSchema.safeParse({ galleryVisibility: "PRIVATE", pin: "abcd" }).success).toBe(false);
+  });
+
+  it("reads the shot limit: empty means unlimited, else a whole number from 1 to 100", () => {
+    const base = { galleryVisibility: "PRIVATE" };
+    expect(eventSettingsSchema.parse({ ...base, shotsPerGuest: "" }).shotsPerGuest).toBeNull();
+    expect(eventSettingsSchema.parse(base).shotsPerGuest).toBeNull();
+    expect(eventSettingsSchema.parse({ ...base, shotsPerGuest: "24" }).shotsPerGuest).toBe(24);
+    expect(eventSettingsSchema.parse({ ...base, shotsPerGuest: " 100 " }).shotsPerGuest).toBe(100);
+    for (const bad of ["0", "101", "abc", "2.5", "-3"]) {
+      expect(eventSettingsSchema.safeParse({ ...base, shotsPerGuest: bad }).success, bad).toBe(false);
+    }
   });
 });

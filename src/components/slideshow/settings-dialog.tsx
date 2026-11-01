@@ -9,6 +9,7 @@ export type SettingsLabels = {
   layoutCollage: string;
   layoutFilm: string;
   layoutMosaic: string;
+  layoutPhotobook: string;
   frame: string;
   names: string;
   rail: string;
@@ -54,6 +55,7 @@ export function SettingsDialog({
     ["collage", labels.layoutCollage],
     ["film", labels.layoutFilm],
     ["mosaic", labels.layoutMosaic],
+    ["photobook", labels.layoutPhotobook],
   ];
   const checkboxes = [
     ["frame", labels.frame, options.frame === "print", (on: boolean): Partial<SlideshowOptions> => ({ frame: on ? "print" : "none" })],

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { DEFAULT_OPTIONS, type SlideshowOptions } from "@/components/slideshow/options";
 
-export const SLIDESHOW_LAYOUTS = ["single", "collage", "film", "mosaic"] as const;
+export const SLIDESHOW_LAYOUTS = ["single", "collage", "film", "mosaic", "photobook"] as const;
 
 const flag = (fallback: boolean) =>
   z

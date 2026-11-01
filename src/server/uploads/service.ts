@@ -9,6 +9,7 @@ import { storage, UPLOAD_URL_TTL_SEC } from "@/server/media/storage";
 import { checkUploadAllowed, KIND_MAX_BYTES } from "@/server/plans/limits";
 import { db } from "@/server/db";
 import { enqueueProcessing, publishUpload } from "./processing";
+import { checkShotAllowed, guestShotsUsed } from "./shots";
 
 /** Kinds guests can upload. Video still needs a plan with videoAllowed (checked in checkUploadAllowed). */
 export const ENABLED_KINDS: readonly UploadKind[] = ["PHOTO", "VIDEO", "VOICE"];
@@ -43,6 +44,10 @@ export async function startUpload({
   const usage = { uploadCount: event.uploadCount, pendingCount: await pendingUploadCount(event.id), storageBytes: event.storageBytes };
   const allowed = checkUploadAllowed(event.plan, usage, { kind, sizeBytes, durationSec: durationSec ?? null });
   if (!allowed.ok) throw new ApiError(allowed.code, LIMIT_MESSAGES[allowed.code] ?? 400);
+  if (kind === "PHOTO" && event.shotsPerGuest !== null) {
+    const shot = checkShotAllowed(event.shotsPerGuest, await guestShotsUsed(db, event.id, guest.id));
+    if (!shot.ok) throw new ApiError(shot.code, 409);
+  }
 
   const maxBytes = Number(event.plan.maxUploadBytes < KIND_MAX_BYTES[kind] ? event.plan.maxUploadBytes : KIND_MAX_BYTES[kind]);
   const upload = await db.upload.create({
@@ -85,6 +90,17 @@ export async function completeUpload({ eventId, uploadId, guestId }: { eventId: 
 
   const detected = await detectMime(await store.readHead(upload.objectKey, SNIFF_BYTES));
   if (!detectedMatchesKind(upload.kind, detected)) return fail(upload, "invalid_file");
+
+  // Disposable-camera mode: the limit holds at completion too, so uploads started in parallel cannot all get through.
+  if (upload.kind === "PHOTO" && upload.guestId) {
+    const event = await db.event.findUnique({ where: { id: eventId }, select: { shotsPerGuest: true } });
+    const shot = checkShotAllowed(event?.shotsPerGuest ?? null, await guestShotsUsed(db, eventId, upload.guestId));
+    if (!shot.ok) {
+      await db.upload.update({ where: { id: upload.id }, data: { status: "FAILED" } });
+      await store.deletePrefix(`events/${upload.eventId}/${upload.id}`);
+      throw new ApiError(shot.code, 409);
+    }
+  }
 
   let data: Partial<Upload> = {};
   if (upload.kind === "PHOTO") {

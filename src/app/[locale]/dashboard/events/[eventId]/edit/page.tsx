@@ -75,7 +75,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ loca
           <SettingsForm
             action={updateSettingsAction.bind(null, locale as Locale, event.id)}
             labels={setLabels}
-            defaults={{ galleryVisibility: event.galleryVisibility, requireApproval: event.requireApproval, hasPin: Boolean(event.pinHash) }}
+            defaults={{ galleryVisibility: event.galleryVisibility, requireApproval: event.requireApproval, hasPin: Boolean(event.pinHash), shotsPerGuest: event.shotsPerGuest }}
           />
         </section>
         </>

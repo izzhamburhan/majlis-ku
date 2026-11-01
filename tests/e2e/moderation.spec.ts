@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import sharp from "sharp";
-import { signInAs } from "./helpers";
+import { agreeToConsent, signInAs } from "./helpers";
 
 async function createEvent(host: Page, names: string): Promise<{ eventId: string; slug: string }> {
   await host.getByRole("link", { name: "+ Majlis baharu" }).click();
@@ -32,8 +32,7 @@ test("approval, hide, delete, export, co-host and deleting the event", async ({ 
   await guest.goto(`/${slug}`);
   await guest.getByPlaceholder("cth. Mak Cik Kiah").fill("Tetamu Ujian");
   await guest.getByRole("button", { name: "Teruskan" }).click();
-  await guest.getByRole("button", { name: "Gambar" }).click();
-  await guest.getByLabel("Saya faham dan bersetuju").check();
+  await agreeToConsent(guest);
   const photo = await sharp({ create: { width: 640, height: 480, channels: 3, background: "#d48aa6" } }).jpeg().toBuffer();
   await guest.getByTestId("photo-input").setInputFiles({ name: "a.jpg", mimeType: "image/jpeg", buffer: photo });
   await expect(guest.getByRole("heading", { name: "Terima kasih!" })).toBeVisible({ timeout: 30_000 });

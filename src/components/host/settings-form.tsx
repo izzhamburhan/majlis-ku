@@ -4,7 +4,21 @@ import { useActionState } from "react";
 import type { FormState } from "@/server/events/actions";
 
 export type SettingsLabels = Record<
-  "visibility" | "private" | "guests" | "approval" | "approvalHelp" | "pin" | "pinHelp" | "pinSet" | "removePin" | "save" | "saved" | "invalid",
+  | "visibility"
+  | "private"
+  | "guests"
+  | "approval"
+  | "approvalHelp"
+  | "shots"
+  | "shotsHelp"
+  | "shotsUnlimited"
+  | "pin"
+  | "pinHelp"
+  | "pinSet"
+  | "removePin"
+  | "save"
+  | "saved"
+  | "invalid",
   string
 >;
 
@@ -14,7 +28,7 @@ export function SettingsForm({
   labels,
 }: {
   action: (state: FormState, formData: FormData) => Promise<FormState>;
-  defaults: { galleryVisibility: "PRIVATE" | "GUESTS"; requireApproval: boolean; hasPin: boolean };
+  defaults: { galleryVisibility: "PRIVATE" | "GUESTS"; requireApproval: boolean; hasPin: boolean; shotsPerGuest: number | null };
   labels: SettingsLabels;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
@@ -45,6 +59,23 @@ export function SettingsForm({
           <span className="font-medium">{labels.approval}</span>
           <span className="block text-sm text-ink/60">{labels.approvalHelp}</span>
         </span>
+      </label>
+      <label className="block">
+        <span className="text-sm font-medium">{labels.shots}</span>
+        <input
+          name="shotsPerGuest"
+          // Remount when the saved value changes: the form reset after saving would otherwise show the old default.
+          key={defaults.shotsPerGuest ?? "none"}
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={100}
+          step={1}
+          defaultValue={defaults.shotsPerGuest ?? ""}
+          placeholder={labels.shotsUnlimited}
+          className="mt-1 block min-h-12 w-40 rounded-xl border border-ink/20 bg-white px-4"
+        />
+        <span className="mt-1 block text-sm text-ink/60">{labels.shotsHelp}</span>
       </label>
       <label className="block">
         <span className="text-sm font-medium">{labels.pin}</span>

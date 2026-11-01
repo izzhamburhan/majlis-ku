@@ -53,6 +53,15 @@ export const eventSettingsSchema = z.object({
     .refine((value) => value === "" || /^\d{4,8}$/.test(value), { message: "PIN must be 4 to 8 digits" })
     .optional()
     .transform((value) => (value ? value : null)),
+  // Disposable-camera mode. Empty = unlimited.
+  shotsPerGuest: z
+    .string()
+    .trim()
+    .refine((value) => value === "" || (/^\d{1,3}$/.test(value) && Number(value) >= 1 && Number(value) <= 100), {
+      message: "Shots per guest must be 1 to 100",
+    })
+    .optional()
+    .transform((value) => (value ? Number(value) : null)),
 });
 
 export type EventSettingsInput = z.output<typeof eventSettingsSchema>;

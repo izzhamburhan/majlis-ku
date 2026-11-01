@@ -1,5 +1,5 @@
 // Isomorphic on purpose: no zod here, so the guest/TV client bundle stays small.
-export type SlideshowLayout = "single" | "collage" | "film" | "mosaic";
+export type SlideshowLayout = "single" | "collage" | "film" | "mosaic" | "photobook";
 export type SlideshowOptions = { layout: SlideshowLayout; frame: "none" | "print"; names: boolean; rail: boolean };
 
 export const DEFAULT_OPTIONS: SlideshowOptions = { layout: "single", frame: "none", names: true, rail: false };
