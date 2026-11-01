@@ -1,0 +1,7 @@
+interface:
+  display_name: "Wow Feature Design"
+  short_description: "Use when designing or building a Majlis Ku \"wow\" guest feature from the competitor research: disposable cam..."
+  default_prompt: "Use $wow-feature-design to handle this Majlis Ku task."
+
+policy:
+  allow_implicit_invocation: true
