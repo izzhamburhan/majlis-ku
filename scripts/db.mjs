@@ -32,6 +32,8 @@ const pg = new EmbeddedPostgres({
   password: decodeURIComponent(url.password || "majlis"),
   port: Number(url.port || 5433),
   persistent: true,
+  // Without these, initdb on Windows uses the system code page (WIN1252), which rejects emoji in wishes.
+  initdbFlags: ["--encoding=UTF8", "--locale=C"],
   onLog: () => {},
 });
 
@@ -41,12 +43,23 @@ if (fresh) {
   await pg.initialise();
 }
 await pg.start();
-try {
-  await pg.createDatabase(database);
-  console.log(`db: created database "${database}"`);
-} catch {
-  // Already exists.
+
+// Create the database as UTF8 explicitly, so it is UTF8 even in a cluster made before the flags above.
+const client = pg.getPgClient();
+await client.connect();
+const { rows } = await client.query("SELECT pg_encoding_to_char(encoding) AS encoding FROM pg_database WHERE datname = $1", [database]);
+if (rows.length === 0) {
+  await client.query(
+    `CREATE DATABASE ${client.escapeIdentifier(database)} ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0`,
+  );
+  console.log(`db: created database "${database}" (UTF8)`);
+} else if (rows[0].encoding !== "UTF8") {
+  console.warn(
+    `db: WARNING database "${database}" uses ${rows[0].encoding}; emoji and other non-Latin text will fail. ` +
+      `Recreate it: stop this server, delete ${DATA_DIR}, then run db:start, prisma migrate dev and prisma db seed.`,
+  );
 }
+await client.end();
 console.log(`db: PostgreSQL running on port ${url.port || 5433} (database "${database}"). Ctrl+C to stop.`);
 
 let stopping = false;

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Market Parity"
+  short_description: "Use when a Majlis Ku change adds or reshapes a product feature, plan, price, or guest-facing flow, or when..."
+  default_prompt: "Use $market-parity to handle this Majlis Ku task."
+
+policy:
+  allow_implicit_invocation: true

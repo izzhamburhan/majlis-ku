@@ -25,6 +25,8 @@ Skills enforce the process gates in `playbook.md`. **Use them (Codex: `$skill-na
 | `payments-guard` | Anything touching prices, plans, plan limits, checkout, the `PaymentProvider` interface, webhooks, receipts, or refunds. |
 | `guest-experience-guard` | Any page or component a guest sees: the event page, upload flow, gallery, slideshow, e-card, RSVP. Checks the JS budget, low-end Android, in-app browsers, i18n, and accessibility. |
 | `doc-drift` | Code diverges from the docs, or a change alters layout, rules, contracts, env variables, status, or process. |
+| `market-parity` | A feature, plan, price, or guest flow is added or reshaped; sets the bar against the competitor research in `docs/research/`. |
+| `wow-feature-design` | Designing a "wow" feature from the research: disposable camera, film looks, reveal, interactive TV wall, per-table QR, highlight reel, photobook, voice wall, sub-events, offline queue, money-gift QR, face finder, AI moderation. |
 
 Skills live in `.codex/skills/` (Codex) with the source copy in `.claude/skills/`. Edit the Claude copy, then run `node scripts/skills.mjs sync`; CI runs `node scripts/skills.mjs check` and fails if the twins differ. When in doubt, invoke `majlis-workflow` first.
 
@@ -74,7 +76,7 @@ node scripts/skills.mjs sync
 node scripts/skills.mjs check
 ```
 
-Local sign-in: with `EMAIL_SERVER` empty the magic link is printed in the server log and appended to `.data/dev-mail.log`; emails in `ADMIN_EMAILS` become admins, checked on every request (removing an email revokes access); admins are read-only on host dashboards and act through `/admin`. If port 5433 is taken, change the port in `DATABASE_URL` in `.env`. To test on a phone, set `NEXT_PUBLIC_APP_URL` and `AUTH_URL` to `http://<LAN-IP>:3000` and run `npm run dev -- -H 0.0.0.0`. Read `NEXT_PUBLIC_APP_URL` through `env()` in server code, never `process.env.NEXT_PUBLIC_*` (frozen at build time). Do not run `next dev` and `next build` together (shared `.next/`), and stop old `next start` processes before e2e (one started without `CRON_SECRET` makes the cron e2e fail with 404). `GET /api/health` returns 200 `{ "status": "ok" }` when the database answers, 503 otherwise.
+Local sign-in: with `EMAIL_SERVER` empty the magic link is printed in the server log and appended to `.data/dev-mail.log`; emails in `ADMIN_EMAILS` become admins, checked on every request (removing an email revokes access); admins are read-only on host dashboards and act through `/admin`. If port 5433 is taken, change the port in `DATABASE_URL` in `.env`. The local database must be UTF8 (emoji in wishes fail otherwise); `db:start` warns if an older one is not: delete `.data/postgres` and run `db:start`, migrate and seed again. To test on a phone, set `NEXT_PUBLIC_APP_URL` and `AUTH_URL` to `http://<LAN-IP>:3000` and run `npm run dev -- -H 0.0.0.0`. Read `NEXT_PUBLIC_APP_URL` through `env()` in server code, never `process.env.NEXT_PUBLIC_*` (frozen at build time). Do not run `next dev` and `next build` together (shared `.next/`), and stop old `next start` processes before e2e (one started without `CRON_SECRET` makes the cron e2e fail with 404). `GET /api/health` returns 200 `{ "status": "ok" }` when the database answers, 503 otherwise.
 
 ## Rules
 
