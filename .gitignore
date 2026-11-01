@@ -39,3 +39,6 @@ npm-debug.log*
 
 # Local database, media and dev mail (npm run db:start, local storage driver)
 .data/
+
+# Playwright MCP browser logs and snapshots (also keeps Tailwind from rescanning them)
+.playwright-mcp/

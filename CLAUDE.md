@@ -31,6 +31,8 @@ Skills enforce the process gates in `playbook.md`. **Invoke them with the Skill 
 | `payments-guard` | Anything touching prices, plans, plan limits, checkout, the `PaymentProvider` interface, webhooks, receipts, or refunds. |
 | `guest-experience-guard` | Any page or component a guest sees: the event page, upload flow, gallery, slideshow, e-card, RSVP. Checks the JS budget, low-end Android, in-app browsers, i18n, and accessibility. |
 | `doc-drift` | Code diverges from the docs, or a change alters layout, rules, contracts, env variables, status, or process. |
+| `market-parity` | A feature, plan, price, or guest flow is added or reshaped; sets the bar against the competitor research in `docs/research/`. |
+| `wow-feature-design` | Designing a "wow" feature from the research: disposable camera, film looks, reveal, interactive TV wall, per-table QR, highlight reel, photobook, voice wall, sub-events, offline queue, money-gift QR, face finder, AI moderation. |
 
 Skills live in `.claude/skills/` (Claude Code) with a Codex twin in `.codex/skills/`. Edit the Claude copy, then run `node scripts/skills.mjs sync`; CI runs `node scripts/skills.mjs check` and fails if the twins differ. When in doubt, invoke `majlis-workflow` first.
 
@@ -142,7 +144,7 @@ Try it on a phone on the same Wi-Fi: set `NEXT_PUBLIC_APP_URL` and `AUTH_URL` in
 
 `NEXT_PUBLIC_APP_URL` is read at runtime through `env()` (QR codes, share links, `metadataBase`); never read `process.env.NEXT_PUBLIC_*` directly in server code, because Next.js freezes it at build time.
 
-Gotchas: do not run `next dev` and `next build` at the same time (they share `.next/`); stop old `next start` processes before e2e, or Playwright reuses a stale server (one started without `CRON_SECRET` makes the cron e2e fail with 404). If an installed PostgreSQL already uses port 5432, that is fine: the embedded one uses 5433. If something else holds 5433 (for example another project's Docker container), change the port in `DATABASE_URL` in your `.env` (for example 5434); `db:start` reads it from there.
+Gotchas: do not run `next dev` and `next build` at the same time (they share `.next/`); stop old `next start` processes before e2e, or Playwright reuses a stale server (one started without `CRON_SECRET` makes the cron e2e fail with 404). If an installed PostgreSQL already uses port 5432, that is fine: the embedded one uses 5433. If something else holds 5433 (for example another project's Docker container), change the port in `DATABASE_URL` in your `.env` (for example 5434); `db:start` reads it from there. The local database must be UTF8 (emoji in wishes fail otherwise); `db:start` creates it that way and warns if an older one is not, in which case stop it, delete `.data/postgres`, and run `db:start`, `prisma migrate dev` and `prisma db seed` again.
 
 ## Rules
 
