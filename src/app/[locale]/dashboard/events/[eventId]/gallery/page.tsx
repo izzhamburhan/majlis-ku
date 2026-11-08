@@ -38,12 +38,12 @@ export default async function HostGalleryPage({
     { status: "hidden" as const, label: tm("statusHidden") },
   ];
   const canMod = canModerate(event); // admins who are not members are read-only here (export included)
-  const download = "inline-flex min-h-11 items-center rounded-full border border-ink/20 bg-white px-4 text-sm font-medium";
+  const download = "inline-flex min-h-11 items-center rounded-full border border-ink/20 bg-surface px-4 text-sm font-medium";
 
   return (
     <div className="space-y-4">
       {canMod ? (
-      <section className="flex flex-wrap items-center gap-2 rounded-2xl bg-white/60 p-3">
+      <section className="flex flex-wrap items-center gap-2 rounded-2xl bg-surface p-3">
         <span className="text-sm font-medium">{tx("title")}:</span>
         <a href={`/api/events/${event.id}/export/media?locale=${locale}`} className={download} data-testid="export-zip" title={tx("zipHelp")}>
           {tx("zip")}
@@ -66,7 +66,7 @@ export default async function HostGalleryPage({
           <Link
             key={status}
             href={galleryHref(base, query, { status })}
-            className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm ${query.status === status ? "bg-ink text-white" : "bg-white"}`}
+            className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm ${query.status === status ? "bg-ink text-on-ink" : "bg-surface"}`}
           >
             {label}
           </Link>
@@ -93,7 +93,7 @@ export default async function HostGalleryPage({
       />
       {page.nextCursor ? (
         <div className="text-center">
-          <Link href={nextPageHref(base, query, page.nextCursor)} className="inline-flex min-h-11 items-center rounded-full bg-white px-6 font-medium shadow-sm">
+          <Link href={nextPageHref(base, query, page.nextCursor)} className="inline-flex min-h-11 items-center rounded-full bg-surface px-6 font-medium shadow-sm">
             {t("loadMore")}
           </Link>
         </div>

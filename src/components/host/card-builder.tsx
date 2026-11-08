@@ -9,7 +9,7 @@ import { saveCardAction } from "@/server/ecard/actions";
 
 type TemplateOption = { id: string; name: string; style: { primary: string; background: string; accent: string; layout: string; font: string } };
 
-const input = "mt-1 block min-h-11 w-full rounded-xl border bg-white px-3";
+const input = "mt-1 block min-h-11 w-full rounded-xl border bg-surface px-3";
 
 export function CardBuilder({
   eventId,
@@ -33,7 +33,7 @@ export function CardBuilder({
 
   const set = <K extends keyof typeof card>(key: K, value: (typeof card)[K]) => setCard((c) => ({ ...c, [key]: value }));
   const bad = (field: string) => status?.fields?.some((f) => f === field || f.startsWith(`${field}.`));
-  const border = (field: string) => (bad(field) ? "border-red-500" : "border-ink/20");
+  const border = (field: string) => (bad(field) ? "border-danger" : "border-ink/20");
 
   function save() {
     startSaving(async () => {
@@ -60,7 +60,7 @@ export function CardBuilder({
     <label className="block">
       <span className="text-sm font-medium">{t(key)}</span>
       {rows > 1 ? (
-        <textarea value={card[key]} rows={rows} onChange={(e) => set(key, e.target.value)} className={`mt-1 block w-full rounded-xl border bg-white p-3 ${border(key)}`} />
+        <textarea value={card[key]} rows={rows} onChange={(e) => set(key, e.target.value)} className={`mt-1 block w-full rounded-xl border bg-surface p-3 ${border(key)}`} />
       ) : (
         <input value={card[key]} onChange={(e) => set(key, e.target.value)} className={`${input} ${border(key)}`} />
       )}
@@ -120,7 +120,7 @@ export function CardBuilder({
                 onChange={(e) => set("schedule", card.schedule.map((r, j) => (j === i ? { ...r, label: e.target.value } : r)))}
                 className={`${input} flex-1 ${border(`schedule.${i}`)}`}
               />
-              <button type="button" onClick={() => set("schedule", card.schedule.filter((_, j) => j !== i))} className="min-h-11 px-2 text-sm text-red-700">
+              <button type="button" onClick={() => set("schedule", card.schedule.filter((_, j) => j !== i))} className="min-h-11 px-2 text-sm text-danger">
                 {t("remove")}
               </button>
             </div>
@@ -153,7 +153,7 @@ export function CardBuilder({
                 onChange={(e) => set("contacts", card.contacts.map((r, j) => (j === i ? { ...r, phone: e.target.value } : r)))}
                 className={`${input} w-36 ${border(`contacts.${i}`)}`}
               />
-              <button type="button" onClick={() => set("contacts", card.contacts.filter((_, j) => j !== i))} className="min-h-11 px-2 text-sm text-red-700">
+              <button type="button" onClick={() => set("contacts", card.contacts.filter((_, j) => j !== i))} className="min-h-11 px-2 text-sm text-danger">
                 {t("remove")}
               </button>
             </div>
@@ -175,7 +175,7 @@ export function CardBuilder({
               <button
                 type="button"
                 onClick={() => void upload("photo", null, "DELETE", photo.key)}
-                className="absolute top-1 right-1 rounded-full bg-white/90 px-2 text-xs text-red-700"
+                className="absolute top-1 right-1 rounded-full bg-white/90 px-2 text-xs text-red-700" /* stori-keep: over a photo */
               >
                 {t("remove")}
               </button>
@@ -204,7 +204,7 @@ export function CardBuilder({
         <h3 className="font-medium">{t("music")}</h3>
         {musicUrl ? <audio controls src={musicUrl} className="mt-2 w-full" /> : null}
         <div className="mt-2 flex gap-2">
-          <label className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-ink/20 bg-white px-4 text-sm font-medium">
+          <label className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-ink/20 bg-surface px-4 text-sm font-medium">
             {uploading === "music" ? t("uploading") : t("addMusic")}
             <input
               type="file"
@@ -218,14 +218,14 @@ export function CardBuilder({
             />
           </label>
           {musicUrl ? (
-            <button type="button" onClick={() => void upload("music", null, "DELETE")} className="min-h-11 px-3 text-sm text-red-700 underline">
+            <button type="button" onClick={() => void upload("music", null, "DELETE")} className="min-h-11 px-3 text-sm text-danger underline">
               {t("removeMusic")}
             </button>
           ) : null}
         </div>
       </section>
 
-      <section className="space-y-3 rounded-2xl bg-white p-4">
+      <section className="space-y-3 rounded-2xl bg-surface p-4">
         <h2 className="font-serif text-2xl">{t("rsvpTitle")}</h2>
         <label className="flex min-h-11 items-center gap-3">
           <input type="checkbox" checked={card.rsvpEnabled} onChange={(e) => set("rsvpEnabled", e.target.checked)} className="size-5" />
@@ -265,11 +265,11 @@ export function CardBuilder({
           </span>
         </label>
         {status ? (
-          <p role={status.kind === "saved" ? "status" : "alert"} className={status.kind === "saved" ? "text-green-700" : "text-red-700"}>
+          <p role={status.kind === "saved" ? "status" : "alert"} className={status.kind === "saved" ? "text-green-700" : "text-danger"}>
             {t(status.kind === "saved" ? "saved" : status.kind === "invalid" ? "invalid" : "error")}
           </p>
         ) : null}
-        <button type="button" disabled={saving} onClick={save} className="min-h-12 w-full rounded-full bg-brand font-medium text-white disabled:opacity-60">
+        <button type="button" disabled={saving} onClick={save} className="min-h-12 w-full rounded-full bg-brand font-medium text-on-brand disabled:opacity-60">
           {t("save")}
         </button>
       </section>

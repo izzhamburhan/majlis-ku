@@ -40,7 +40,7 @@ export default async function GuestGalleryPage({
   return (
     <main className="mx-auto max-w-5xl px-4 pb-12">
       <div className="flex items-center justify-between py-3">
-        <Link href={`/${slug}`} className="inline-flex min-h-11 items-center text-sm text-ink/70 underline">
+        <Link href={`/${slug}`} className="inline-flex min-h-11 items-center text-sm text-muted underline">
           ← {t("back")}
         </Link>
         <LocaleToggle locale={locale as Locale} label={tc("switchTo")} />
@@ -68,14 +68,14 @@ export default async function GuestGalleryPage({
         <GalleryGrid items={page.items} labels={labels} showStatus={false} />
         {page.nextCursor ? (
           <div className="text-center">
-            <Link href={nextPageHref(base, query, page.nextCursor)} className="inline-flex min-h-11 items-center rounded-full bg-white px-6 font-medium shadow-sm">
+            <Link href={nextPageHref(base, query, page.nextCursor)} className="inline-flex min-h-11 items-center rounded-full bg-surface px-6 font-medium shadow-sm">
               {tg("loadMore")}
             </Link>
           </div>
         ) : null}
       </div>
       <p className="mt-8 text-center">
-        <Link href={`/${slug}/report`} className="inline-flex min-h-11 items-center text-sm text-ink/60 underline">
+        <Link href={`/${slug}/report`} className="inline-flex min-h-11 items-center text-sm text-muted underline">
           {tr("link")}
         </Link>
       </p>

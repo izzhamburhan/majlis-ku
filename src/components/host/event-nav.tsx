@@ -9,7 +9,7 @@ export function EventNav({ links }: { links: { href: string; label: string; exte
       {links.map((link) => {
         const active = !link.external && pathname === link.href;
         const className = `inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-medium ${
-          active ? "bg-ink text-white" : "bg-white text-ink/80 hover:bg-ink/5"
+          active ? "bg-ink text-on-ink" : "bg-surface text-ink/80 hover:bg-ink/5"
         }`;
         return link.external ? (
           <a key={link.href} href={link.href} target="_blank" rel="noreferrer" className={className}>

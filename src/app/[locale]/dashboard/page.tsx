@@ -19,7 +19,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="font-serif text-3xl">{t("title")}</h1>
           <div className="flex items-center gap-2">
-            <Link href="/dashboard/events/new" className="inline-flex min-h-11 items-center rounded-full bg-brand px-5 font-medium text-white">
+            <Link href="/dashboard/events/new" className="inline-flex min-h-11 items-center rounded-full bg-brand px-5 font-medium text-on-brand">
               + {t("newEvent")}
             </Link>
             <SignOutButton label={tc("signOut")} />
@@ -27,12 +27,12 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
         </div>
         <p className="mt-1 text-sm text-ink/60">{t("signedInAs", { email: user.email })}</p>
         {events.length === 0 ? (
-          <p className="mt-8 rounded-2xl bg-white p-6 text-ink/70 shadow-sm">{t("empty")}</p>
+          <p className="mt-8 rounded-2xl bg-surface p-6 text-ink/70 shadow-sm">{t("empty")}</p>
         ) : (
           <ul className="mt-6 grid gap-3 sm:grid-cols-2">
             {events.map((event) => (
               <li key={event.id}>
-                <Link href={`/dashboard/events/${event.id}`} className="block rounded-2xl bg-white p-5 shadow-sm hover:shadow-md">
+                <Link href={`/dashboard/events/${event.id}`} className="block rounded-2xl bg-surface p-5 shadow-sm hover:shadow-md">
                   <span className="block h-1.5 w-12 rounded-full" style={{ backgroundColor: event.themeColor }} />
                   <span className="mt-3 block font-serif text-2xl">{event.hostNames}</span>
                   <span className="block text-ink/70">{event.title}</span>

@@ -34,7 +34,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ loca
   return (
     <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
       {canEdit ? (
-      <section className="rounded-2xl bg-white/60 p-5">
+      <section className="rounded-2xl bg-surface p-5">
         <h2 className="mb-4 font-serif text-2xl">{t("editTitle")}</h2>
         <EventForm
           action={updateEventAction.bind(null, locale as Locale, event.id)}
@@ -57,7 +57,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ loca
       <div className="space-y-6">
         {canEdit ? (
         <>
-        <section className="rounded-2xl bg-white/60 p-5">
+        <section className="rounded-2xl bg-surface p-5">
           <CoverUploader
             eventId={event.id}
             coverUrl={coverUrl}
@@ -70,7 +70,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ loca
             }}
           />
         </section>
-        <section className="rounded-2xl bg-white/60 p-5">
+        <section className="rounded-2xl bg-surface p-5">
           <h2 className="mb-4 font-serif text-2xl">{ts("title")}</h2>
           <SettingsForm
             action={updateSettingsAction.bind(null, locale as Locale, event.id)}
@@ -80,7 +80,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ loca
         </section>
         </>
         ) : null}
-        <section className="rounded-2xl bg-white/60 p-5">
+        <section className="rounded-2xl bg-surface p-5">
           <MembersPanel
             members={members.map((m) => ({ userId: m.userId, email: m.user.email, role: m.role }))}
             canManage={canManageMembers(event.memberRole)}

@@ -70,7 +70,7 @@ export default function VideoPicker({
   return (
     <div className="mt-4">
       <label
-        className={`inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-full bg-brand px-6 text-lg font-medium text-white ${
+        className={`inline-flex min-h-12 w-full cursor-pointer items-center justify-center rounded-full bg-brand px-6 text-lg font-medium text-on-brand ${
           consent && !busy ? "" : "pointer-events-none opacity-50"
         }`}
         aria-disabled={!consent || busy}
@@ -89,22 +89,22 @@ export default function VideoPicker({
           }}
         />
       </label>
-      <p className="mt-2 text-center text-sm text-ink/60">{t("videoHelp", { seconds: maxSeconds })}</p>
+      <p className="mt-2 text-center text-sm text-muted">{t("videoHelp", { seconds: maxSeconds })}</p>
       {file && stage !== "idle" ? (
         <div className="mt-4 rounded-xl border border-ink/10 p-3 text-sm">
           <div className="flex items-center justify-between gap-2">
             <span className="truncate">{file.name}</span>
-            <span className={stage === "failed" ? "text-red-700" : "text-ink/60"}>{stage === "failed" ? t("failed") : t(stage)}</span>
+            <span className={stage === "failed" ? "text-danger" : "text-muted"}>{stage === "failed" ? t("failed") : t(stage)}</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-ink/10">
             <div
-              className={`h-full ${stage === "failed" ? "bg-red-500" : "bg-brand"}`}
+              className={`h-full ${stage === "failed" ? "bg-danger" : "bg-brand"}`}
               style={{ width: `${stage === "processing" || stage === "done" ? 100 : Math.round(progress * 100)}%` }}
             />
           </div>
           {error ? (
             <div className="mt-2 flex items-center justify-between gap-2">
-              <span role="alert" className="text-red-700">
+              <span role="alert" className="text-danger">
                 {error}
               </span>
               {file ? (

@@ -16,7 +16,7 @@ export default async function CardBuilderPage({ params }: { params: Promise<{ lo
   const [t, tc, tn, messages] = await Promise.all([getTranslations("ecard"), getTranslations("common"), getTranslations("eventNav"), getMessages()]);
 
   if (!event.plan.includesEcard) {
-    return <p className="rounded-2xl bg-white p-6 text-ink/70">{t("locked")}</p>;
+    return <p className="rounded-2xl bg-surface p-6 text-ink/70">{t("locked")}</p>;
   }
 
   // An admin who is not a member only sees the note, so skip loading templates, card and signed media.
@@ -44,10 +44,10 @@ export default async function CardBuilderPage({ params }: { params: Promise<{ lo
           />
         </NextIntlClientProvider>
         ) : (
-          <p className="rounded-2xl bg-white p-6 text-ink/70">{tn("adminReadOnly")}</p>
+          <p className="rounded-2xl bg-surface p-6 text-ink/70">{tn("adminReadOnly")}</p>
         )}
       </div>
-      <aside className="h-fit space-y-3 rounded-2xl bg-white p-5 shadow-sm lg:sticky lg:top-4">
+      <aside className="h-fit space-y-3 rounded-2xl bg-surface p-5 shadow-sm lg:sticky lg:top-4">
         <p className="text-sm font-medium">{t("shareLink")}</p>
         <p className="rounded-xl bg-cream p-3 font-mono text-sm break-all" data-testid="card-url">
           {url}
@@ -57,7 +57,7 @@ export default async function CardBuilderPage({ params }: { params: Promise<{ lo
           <a href={`/${locale === "ms" ? "" : "en/"}i/${event.slug}`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-full border border-ink/20 px-4 text-sm font-medium">
             {t("open")} ↗
           </a>
-          <a href={whatsapp} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-full bg-[#25d366] px-4 text-sm font-medium text-white">
+          <a href={whatsapp} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-full bg-[#25d366] px-4 text-sm font-medium text-white" /* stori-keep: WhatsApp green */>
             {t("whatsapp")}
           </a>
         </div>

@@ -24,12 +24,12 @@ export default async function RsvpPage({
   const totals = rsvpTotals(all);
   const base = `/dashboard/events/${event.id}/rsvp`;
   const exportBase = `/api/events/${event.id}/rsvp/export?locale=${locale}`;
-  const stat = "rounded-2xl bg-white p-4 shadow-sm";
+  const stat = "rounded-2xl bg-surface p-4 shadow-sm";
 
   return (
     <div className="space-y-4">
       <h2 className="font-serif text-3xl">{t("listTitle")}</h2>
-      {!card?.published || !card.content.rsvpEnabled ? <p className="rounded-2xl bg-white p-4 text-sm text-ink/70">{t("noCard")}</p> : null}
+      {!card?.published || !card.content.rsvpEnabled ? <p className="rounded-2xl bg-surface p-4 text-sm text-ink/70">{t("noCard")}</p> : null}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="rsvp-totals">
         <div className={stat}>
           <p className="text-sm text-ink/60">{t("replies")}</p>
@@ -58,7 +58,7 @@ export default async function RsvpPage({
             <Link
               key={f}
               href={f === "all" ? base : `${base}?filter=${f}`}
-              className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm ${filter === f ? "bg-ink text-white" : "bg-white"}`}
+              className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm ${filter === f ? "bg-ink text-on-ink" : "bg-surface"}`}
             >
               {t(f === "all" ? "filterAll" : f === "yes" ? "filterYes" : "filterNo")}
             </Link>
@@ -66,19 +66,19 @@ export default async function RsvpPage({
         </div>
         {canEditEvent(event) ? (
         <div className="flex gap-2">
-          <a href={`${exportBase}&format=csv`} className="inline-flex min-h-11 items-center rounded-full border border-ink/20 bg-white px-4 text-sm font-medium">
+          <a href={`${exportBase}&format=csv`} className="inline-flex min-h-11 items-center rounded-full border border-ink/20 bg-surface px-4 text-sm font-medium">
             {t("csv")}
           </a>
-          <a href={`${exportBase}&format=xlsx`} className="inline-flex min-h-11 items-center rounded-full border border-ink/20 bg-white px-4 text-sm font-medium">
+          <a href={`${exportBase}&format=xlsx`} className="inline-flex min-h-11 items-center rounded-full border border-ink/20 bg-surface px-4 text-sm font-medium">
             {t("xlsx")}
           </a>
         </div>
         ) : null}
       </div>
       {rows.length === 0 ? (
-        <p className="rounded-2xl bg-white p-6 text-center text-ink/60">{t("empty")}</p>
+        <p className="rounded-2xl bg-surface p-6 text-center text-ink/60">{t("empty")}</p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-2xl bg-surface shadow-sm">
           <table className="w-full min-w-[640px] text-left text-sm" data-testid="rsvp-table">
             <thead className="border-b border-ink/10 text-ink/60">
               <tr>

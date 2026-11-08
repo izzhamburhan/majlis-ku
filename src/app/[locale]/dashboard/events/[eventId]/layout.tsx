@@ -59,7 +59,7 @@ export default async function EventLayout({
           </p>
         ) : null}
         {event.memberRole === "ADMIN" ? (
-          <p role="status" className="mt-4 rounded-2xl bg-white p-4 text-sm text-ink/70">
+          <p role="status" className="mt-4 rounded-2xl bg-surface p-4 text-sm text-ink/70">
             {t("adminReadOnly")}
           </p>
         ) : null}

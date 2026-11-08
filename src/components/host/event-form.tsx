@@ -37,7 +37,7 @@ export type EventFormLabels = Record<
   string
 > & { types: Record<string, string> };
 
-const input = "mt-1 block min-h-12 w-full rounded-xl border bg-white px-4";
+const input = "mt-1 block min-h-12 w-full rounded-xl border bg-surface px-4";
 
 export function EventForm({
   action,
@@ -50,7 +50,7 @@ export function EventForm({
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const bad = (name: string) => state.errors?.includes(name);
-  const border = (name: string) => (bad(name) ? "border-red-500" : "border-ink/20");
+  const border = (name: string) => (bad(name) ? "border-danger" : "border-ink/20");
 
   const text = (name: keyof EventFormValues, label: string, opts: { placeholder?: string; required?: boolean; type?: string } = {}) => (
     <label className="block">
@@ -73,7 +73,7 @@ export function EventForm({
   return (
     <form action={formAction} className="space-y-4">
       {state.errors?.length ? (
-        <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">
+        <p role="alert" className="rounded-lg bg-surface p-3 text-danger">
           {labels.invalid}
         </p>
       ) : null}
@@ -109,7 +109,7 @@ export function EventForm({
           placeholder={labels.welcomePlaceholder}
           rows={3}
           maxLength={500}
-          className={`mt-1 block w-full rounded-xl border bg-white p-4 ${border("welcomeText")}`}
+          className={`mt-1 block w-full rounded-xl border bg-surface p-4 ${border("welcomeText")}`}
         />
       </label>
       <label className="flex items-center gap-3">
@@ -119,7 +119,7 @@ export function EventForm({
       <button
         type="submit"
         disabled={pending}
-        className="min-h-12 w-full rounded-full bg-brand px-6 font-medium text-white hover:bg-brand-dark disabled:opacity-60 sm:w-auto"
+        className="min-h-12 w-full rounded-full bg-brand px-6 font-medium text-on-brand hover:bg-brand-dark disabled:opacity-60 sm:w-auto"
       >
         {labels.submit}
       </button>
