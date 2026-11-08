@@ -563,3 +563,85 @@ body {
     animation: none !important;
   }
 }
+
+/* ---------- Stori landing ---------- */
+
+@keyframes st-drift {
+  from {
+    scale: 1.09;
+  }
+  to {
+    scale: 1;
+  }
+}
+
+.st-hero {
+  animation: st-drift 2400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.st-card {
+  transition: translate 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.st-card:hover {
+  translate: 0 -6px;
+}
+
+.st-strip {
+  scrollbar-color: var(--st-line) transparent;
+  scrollbar-width: thin;
+}
+
+/* Over the closing photo: 80% dusk keeps white text above 4.5:1 on any photo; solid dusk where color-mix is missing. */
+.st-scrim {
+  background: var(--color-cream);
+}
+
+@supports (color: color-mix(in srgb, red, blue)) {
+  .st-scrim {
+    background: color-mix(in srgb, var(--color-cream) 80%, transparent);
+  }
+}
+
+/* Landing hero copy block. Phone and tablet: the same fade as .st-fade (text starts below the 90% point).
+   Desktop: the block sits at the left and fades to the right instead, so the photo shows beside the text; the
+   scrim stays at 92% dusk under all text, and a short fade at the top avoids a hard edge. */
+.st-herocopy {
+  position: relative;
+}
+
+.st-herocopy::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-cream);
+}
+
+@supports (color: color-mix(in srgb, red, blue)) {
+  .st-herocopy::before {
+    background: linear-gradient(
+      to bottom,
+      transparent 0,
+      color-mix(in srgb, var(--color-cream) 90%, transparent) 3.5rem,
+      var(--color-cream) 7rem
+    );
+  }
+}
+
+@media (min-width: 64rem) {
+  .st-herocopy::before {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 5rem);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 5rem);
+  }
+
+  @supports (color: color-mix(in srgb, red, blue)) {
+    .st-herocopy::before {
+      background: linear-gradient(
+        to right,
+        color-mix(in srgb, var(--color-cream) 92%, transparent) 0,
+        color-mix(in srgb, var(--color-cream) 92%, transparent) 70%,
+        transparent 100%
+      );
+    }
+  }
+}

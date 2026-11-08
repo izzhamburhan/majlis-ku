@@ -21,7 +21,7 @@ export function GalleryGrid({
   return (
     <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4" data-testid="gallery-grid">
       {items.map((item) => (
-        <li key={`${item.type}-${item.id}`} className="relative overflow-hidden rounded-2xl bg-surface shadow-sm">
+        <li key={`${item.type}-${item.id}`} className="relative overflow-hidden rounded-3xl bg-surface shadow-sm">
           {item.type === "wish" ? (
             <div className="flex aspect-square flex-col justify-between p-4">
               <p className="line-clamp-6 font-serif text-lg leading-snug">“{item.message}”</p>

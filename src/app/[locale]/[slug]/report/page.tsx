@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteFooter } from "@/components/site-footer";
 import { LocaleToggle } from "@/components/locale-toggle";
+import { StoriRoot } from "@/components/stori-root";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
+import { display, ui } from "@/lib/fonts";
 import { REPORT_REASONS } from "@/lib/schemas/report";
 import { findGuestEvent } from "@/server/guests/context";
 import { submitReportAction } from "@/server/reports/actions";
@@ -30,7 +32,7 @@ export default async function ReportPage({
   const [t, tc] = await Promise.all([getTranslations("report"), getTranslations("common")]);
 
   return (
-    <>
+    <StoriRoot className={`${display.variable} ${ui.variable}`}>
       <main className="mx-auto max-w-md px-4 pb-12">
         <div className="flex items-center justify-between py-3">
           <Link href={`/${slug}`} className="inline-flex min-h-11 items-center text-sm text-muted underline">
@@ -85,6 +87,6 @@ export default async function ReportPage({
         )}
       </main>
       <SiteFooter />
-    </>
+    </StoriRoot>
   );
 }

@@ -24,10 +24,68 @@
     "heroTitle": "Kenangan majlis anda, terkumpul di satu tempat",
     "heroBody": "Tetamu imbas satu kod QR dan terus kongsi gambar, video, mesej suara dan ucapan. Tanpa aplikasi, tanpa akaun.",
     "cta": "Cipta majlis anda",
-    "guestbookTitle": "Buku tetamu digital",
-    "guestbookBody": "Galeri langsung dan tayangan slaid untuk skrin di dewan.",
     "ecardTitle": "Kad jemputan & RSVP",
-    "ecardBody": "Kongsi pautan di WhatsApp. Tetamu lihat butiran, peta, kiraan detik dan hantar RSVP."
+    "photos": {
+      "joy": "Pengantin tersenyum sambil berpelukan di padang",
+      "pink": "Pasangan pengantin berbaju merah jambu",
+      "mono": "Pengantin memegang jambangan bunga, hitam putih",
+      "outdoor": "Pengantin lelaki mendukung pengantin perempuan di luar",
+      "leaves": "Pengantin berhijab putih di hadapan dedaun hijau",
+      "henna": "Pengantin berhijab bermahkota dengan inai di tangan",
+      "veil": "Pengantin berhijab putih dengan tudung jaring"
+    },
+    "strip": {
+      "title": "Setiap tetamu nampak majlis anda dari sudut yang berbeza",
+      "label": "Contoh kenangan tetamu",
+      "names": {
+        "pink": "Farah",
+        "henna": "Siti Nur",
+        "outdoor": "Hafiz",
+        "leaves": "Azim",
+        "mono": "Mak Long",
+        "veil": "Danish"
+      }
+    },
+    "steps": {
+      "title": "Cara ia berfungsi",
+      "one": {
+        "title": "Cetak kad QR",
+        "body": "Muat turun PDF kad QR, cetak dan letak di meja."
+      },
+      "two": {
+        "title": "Imbas dan terus kongsi",
+        "body": "Tiada aplikasi. Tiada kata laluan. Nama sahaja."
+      },
+      "three": {
+        "title": "Muncul di galeri, serta-merta",
+        "body": "Galeri langsung, dan anda yang mengawalnya."
+      }
+    },
+    "venue": {
+      "title": "Seluruh dewan melihatnya bersama",
+      "body": "Tayangan slaid untuk skrin atau projektor, dengan nama dan ucapan tetamu.",
+      "sample": "Contoh ucapan di skrin",
+      "wishOne": "Selamat pengantin baru. Semoga berbahagia hingga ke Jannah.",
+      "wishOneBy": "Mak Long",
+      "wishTwo": "Tahniah Aisyah! Lawa sangat hari ini.",
+      "wishTwoBy": "Farah"
+    },
+    "privacy": {
+      "title": "Kenangan peribadi kekal peribadi",
+      "one": "Galeri peribadi secara lalai, dengan PIN pilihan.",
+      "two": "Tetamu dimaklumkan sebelum memuat naik.",
+      "three": "Fail dipadam apabila tempoh pelan tamat, atau bila-bila masa anda mahu."
+    },
+    "pricing": {
+      "title": "Pelan dan harga",
+      "uploads": "{count} muat naik",
+      "unlimited": "Muat naik tanpa had",
+      "retention": "Disimpan {days} hari",
+      "gallery": "Galeri tetamu"
+    },
+    "closing": {
+      "title": "Pelamin dah siap?"
+    }
   },
   "auth": {
     "title": "Log masuk sebagai tuan rumah",
@@ -199,6 +257,7 @@
     "viewGallery": "Lihat galeri",
     "addMore": "Kongsi lagi",
     "galleryTitle": "Galeri {names}",
+    "addMemory": "Tambah kenangan",
     "back": "Kembali ke majlis",
     "errors": {
       "limit_reached": "Galeri ini sudah penuh.",
