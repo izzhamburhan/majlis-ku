@@ -3,7 +3,7 @@
 
 import type { ReactNode } from "react";
 
-// Songket guest UI pieces. Icons are drawn here in one stroke weight; no icon library on the guest route.
+// Stori guest UI pieces. Icons are drawn here in one stroke weight; no icon library on the guest route.
 
 function Icon({ children, size = 26 }: { children: ReactNode; size?: number }) {
   return (
@@ -41,8 +41,8 @@ export const WishIcon = () => (
   </Icon>
 );
 
-export const GalleryIcon = () => (
-  <Icon size={20}>
+export const GalleryIcon = ({ size = 20 }: { size?: number }) => (
+  <Icon size={size}>
     <rect x="3.5" y="4.5" width="17" height="15" rx="1.5" />
     <circle cx="9" cy="10" r="1.6" />
     <path d="m4 17 5-4.5 3.5 3 3-2.5 4.5 4" />
@@ -55,18 +55,13 @@ export const BackIcon = () => (
   </Icon>
 );
 
-/** Bunga cengkih: the eight-point clove flower woven into songket. */
-export function Bunga({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 64 64" className={className} aria-hidden>
-      <g fill="currentColor">
-        <path d="M32 2 38 26 62 32 38 38 32 62 26 38 2 32 26 26Z" opacity=".9" />
-        <path d="M32 12 35.5 28.5 52 32 35.5 35.5 32 52 28.5 35.5 12 32 28.5 28.5Z" transform="rotate(45 32 32)" opacity=".55" />
-      </g>
-      <circle cx="32" cy="32" r="4.5" fill="var(--sk-ground)" />
-    </svg>
-  );
-}
+/** A tick in a ring, for the thank-you view. */
+export const CheckIcon = ({ size }: { size?: number }) => (
+  <Icon size={size}>
+    <circle cx="12" cy="12" r="9.5" />
+    <path d="m7.8 12.4 2.9 2.9 5.6-6" />
+  </Icon>
+);
 
 export type MyPhoto = { id: number; url: string; stage: string; progress: number; failed: boolean; error?: string };
 
@@ -87,22 +82,22 @@ export function MyPhotos({
   if (photos.length === 0) return null;
   const failed = photos.filter((p) => p.failed);
   return (
-    <section className="mt-10" aria-label={title}>
+    <section className="mt-6" aria-label={title}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="sk-display text-xl text-[var(--sk-gold-light)]">{title}</h2>
-        <p className="text-sm text-[var(--sk-ivory)]/75 tabular-nums" aria-live="polite">
+        <h2 className="font-serif text-xl text-brand">{title}</h2>
+        <p className="text-sm text-muted tabular-nums" aria-live="polite">
           {progressText}
         </p>
       </div>
       <ul className="-mx-5 mt-3 flex gap-2 overflow-x-auto px-5 pb-2 [scrollbar-width:thin]">
         {photos.map((photo) => (
-          <li key={photo.id} className="relative size-16 shrink-0 overflow-hidden rounded-[4px] ring-1 ring-[var(--sk-gold)]/40">
+          <li key={photo.id} className="relative size-16 shrink-0 overflow-hidden rounded-xl ring-1 ring-[var(--st-line)]">
             <img src={photo.url} alt="" className={`h-full w-full object-cover ${photo.stage === "done" ? "" : "opacity-60"}`} />
             {photo.failed ? (
-              <span className="absolute inset-0 bg-red-900/55" aria-hidden />
+              <span className="absolute inset-0 bg-black/55 ring-2 ring-inset ring-danger" aria-hidden />
             ) : photo.stage !== "done" ? (
-              <span className="absolute inset-x-0 bottom-0 h-1 bg-black/40" aria-hidden>
-                <span className="block h-full bg-[var(--sk-gold-light)] transition-[width] duration-300" style={{ width: `${Math.max(8, Math.round(photo.progress * 100))}%` }} />
+              <span className="absolute inset-x-0 bottom-0 h-1 bg-black/50" aria-hidden>
+                <span className="block h-full bg-brand transition-[width] duration-300" style={{ width: `${Math.max(8, Math.round(photo.progress * 100))}%` }} />
               </span>
             ) : null}
           </li>
@@ -112,8 +107,8 @@ export function MyPhotos({
         <div className="mt-2 space-y-1">
           {failed.map((photo) => (
             <p key={photo.id} className="flex items-center justify-between gap-3 text-sm">
-              <span className="text-[#ffb4a8]">{photo.error}</span>
-              <button type="button" onClick={() => onRetry(photo.id)} className="min-h-11 px-2 font-medium text-[var(--sk-gold-light)] underline underline-offset-4">
+              <span className="text-danger">{photo.error}</span>
+              <button type="button" onClick={() => onRetry(photo.id)} className="min-h-11 px-2 font-medium text-brand underline underline-offset-4">
                 {retryLabel}
               </button>
             </p>

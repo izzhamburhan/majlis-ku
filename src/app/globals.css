@@ -57,6 +57,48 @@ body {
   }
 }
 
+/* ---------- Stori guest page ----------
+   Solid colours first, translucent ones only where color-mix and backdrop-filter exist. */
+
+/* The block under the cover that holds names and actions: fades from the photo into the ground. Its top padding
+   starts below the 90% point, so text over any photo sits on a scrim of at least 90%. */
+.st-fade {
+  background: var(--color-cream);
+}
+
+@supports (color: color-mix(in srgb, red, blue)) {
+  .st-fade {
+    background: linear-gradient(
+      to bottom,
+      transparent 0,
+      color-mix(in srgb, var(--color-cream) 90%, transparent) 3.5rem,
+      var(--color-cream) 7rem
+    );
+  }
+}
+
+/* Glass capsule: translucent dusk with blur, a solid dusk capsule where that is not supported. */
+.st-glass {
+  background: var(--st-ground-deep);
+  box-shadow: 0 0 0 1px var(--st-line);
+}
+
+@supports (color: color-mix(in srgb, red, blue)) and ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .st-glass {
+    background: color-mix(in srgb, var(--color-cream) 80%, transparent);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+  }
+}
+
+.st-shutter {
+  transition: scale 160ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.st-shutter:active:not(:disabled) {
+  scale: 0.92;
+}
+
 /* ---------- Songket world (guest page and Photobook TV) ----------
    Variables come from songketVars(themeColor) on the page wrapper. */
 

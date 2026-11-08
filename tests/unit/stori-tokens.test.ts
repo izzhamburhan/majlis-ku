@@ -13,10 +13,13 @@ const root = process.cwd();
 const STORI_SOURCES = [
   "src/components/host",
   "src/components/gallery",
+  "src/components/guest/guest-actions.tsx",
+  "src/components/guest/guest-ui.tsx",
   "src/components/guest/video-picker.tsx",
   "src/components/guest/voice-recorder.tsx",
   "src/components/locale-toggle.tsx",
   "src/app/[locale]/dashboard",
+  "src/app/[locale]/[slug]/page.tsx",
   "src/app/[locale]/[slug]/gallery/page.tsx",
   "src/app/[locale]/[slug]/report/page.tsx",
 ];
@@ -24,8 +27,11 @@ const STORI_SOURCES = [
 // Guest-facing subset: text there uses the solid muted token, not an ink opacity modifier.
 const GUEST_SOURCES = [
   "src/components/gallery",
+  "src/components/guest/guest-actions.tsx",
+  "src/components/guest/guest-ui.tsx",
   "src/components/guest/video-picker.tsx",
   "src/components/guest/voice-recorder.tsx",
+  "src/app/[locale]/[slug]/page.tsx",
   "src/app/[locale]/[slug]/gallery/page.tsx",
   "src/app/[locale]/[slug]/report/page.tsx",
 ];

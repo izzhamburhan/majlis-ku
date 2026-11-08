@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element -- signed, short-lived media URLs */
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Bunga } from "@/components/guest/guest-ui";
+import { Bunga } from "./bunga";
 import type { GalleryItem } from "@/server/gallery/items";
 import { buildSpreads, composePage, nextSpread, promote, spreadKey, startBook, type BookPhoto, type BookState, type Page } from "./photobook";
 

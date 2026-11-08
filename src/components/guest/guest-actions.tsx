@@ -1,9 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { BackIcon, Bunga, CameraIcon, GalleryIcon, MyPhotos, VideoIcon, VoiceIcon, WishIcon } from "./guest-ui";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { BackIcon, CameraIcon, CheckIcon, GalleryIcon, MyPhotos, VideoIcon, VoiceIcon, WishIcon } from "./guest-ui";
 import { compressImage, postJson, UploadError, uploadOne, type Stage } from "./upload-client";
 
 // Loaded only when the guest opens Video or Voice, so the first page load stays small.
@@ -46,9 +47,6 @@ const KNOWN_ERRORS = [
   "shots_used_up",
 ] as const;
 
-// Inside the paper sheet the shared pickers keep their ink styles; their brand colour becomes the host's deep ground.
-const paperVars = { "--color-brand": "var(--sk-ground)", "--color-ink": "#2a211a" } as CSSProperties;
-
 export function GuestActions({
   slug,
   privacyHref,
@@ -70,6 +68,7 @@ export function GuestActions({
   shots: { limit: number; used: number } | null;
 }) {
   const t = useTranslations("guest");
+  const router = useRouter();
   const [view, setView] = useState<View>(needsPin ? "pin" : initialName ? "menu" : "name");
   const [name, setName] = useState(initialName ?? "");
   const [consent, setConsent] = useState(false);
@@ -115,6 +114,8 @@ export function GuestActions({
     try {
       await postJson(`/api/e/${slug}/pin`, { pin });
       setView(name && initialName ? "menu" : "name");
+      // The server page left out the cover, gallery link, welcome text and counts until the PIN passed.
+      router.refresh();
     } catch (e) {
       setError(e instanceof UploadError && e.code === "locked" ? t("pinLocked") : t("pinWrong"));
     } finally {
@@ -214,34 +215,34 @@ export function GuestActions({
     }
   }
 
-  const gold =
-    "inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--sk-gold)] px-6 text-lg font-semibold text-[var(--sk-ground-deep)] transition-colors hover:bg-[var(--sk-gold-light)] disabled:cursor-not-allowed disabled:opacity-50";
-  const outline =
-    "inline-flex min-h-12 w-full items-center justify-center rounded-full border border-[var(--sk-gold)]/70 px-6 font-medium text-[var(--sk-ivory)] hover:bg-white/5";
+  const primary =
+    "inline-flex min-h-12 w-full items-center justify-center rounded-full bg-brand px-6 text-lg font-semibold text-on-brand transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50";
+  const outline = "inline-flex min-h-12 w-full items-center justify-center rounded-full border border-[var(--st-line)] px-6 font-medium text-ink hover:bg-[var(--st-surface-lift)]";
   const field =
-    "block min-h-14 w-full border-0 border-b-2 border-[var(--sk-gold)]/70 bg-transparent px-1 text-xl text-[var(--sk-ivory)] placeholder:text-[var(--sk-ivory)]/60 focus:border-[var(--sk-gold-light)] focus:outline-none";
+    "block min-h-14 w-full rounded-2xl border border-[var(--st-line)] bg-[var(--st-ground-deep)] px-4 text-xl text-ink placeholder:text-muted focus:border-brand focus:outline-none";
+  const panel = "rounded-3xl bg-surface p-5 ring-1 ring-[var(--st-line)]";
   const errorBox = error ? (
-    <p role="alert" className="mt-4 rounded-md bg-[#5c1410] px-4 py-3 text-[#ffd9d2]">
+    <p role="alert" className="mt-4 rounded-2xl bg-[var(--st-ground-deep)] px-4 py-3 text-danger">
       {error}
     </p>
   ) : null;
 
-  // The ivory "kad" that holds the longer tasks, like a card slipped into the hand.
+  // The dusk sheet that holds the longer tasks. Ordinary page flow, not a dialog: the names above stay readable.
   const sheet = (title: string, body: ReactNode) => (
-    <section ref={sheetRef} className="sk-rise pb-paper mt-8 scroll-mt-4 rounded-[6px] p-5 text-[#2a211a] shadow-[0_24px_48px_-16px_rgb(0_0_0/0.6)]" style={paperVars}>
-      <button type="button" onClick={() => setView("menu")} className="-ml-2 inline-flex min-h-11 items-center gap-1 px-2 text-sm font-medium text-[#5a4a3a]">
+    <section ref={sheetRef} className={`${panel} mt-6 scroll-mt-4`}>
+      <button type="button" onClick={() => setView("menu")} className="-ml-2 inline-flex min-h-11 items-center gap-1 px-2 text-sm font-medium text-muted">
         <BackIcon />
         {t("back")}
       </button>
-      <h2 className="sk-display mt-1 text-3xl">{title}</h2>
+      <h2 className="mt-1 font-serif text-3xl">{title}</h2>
       {body}
     </section>
   );
 
   if (view === "pin") {
     return (
-      <section className="sk-rise mt-10">
-        <h2 className="sk-display text-center text-2xl">{t("pinTitle")}</h2>
+      <section className={`${panel} mt-6`}>
+        <h2 className="text-center font-serif text-2xl">{t("pinTitle")}</h2>
         <form
           method="post"
           className="mt-6 space-y-5"
@@ -251,10 +252,10 @@ export function GuestActions({
           }}
         >
           <label className="block">
-            <span className="text-sm text-[var(--sk-ivory)]/85">{t("pinLabel")}</span>
+            <span className="text-sm text-muted">{t("pinLabel")}</span>
             <input name="pin" inputMode="numeric" autoComplete="one-time-code" pattern="\d{4,8}" maxLength={8} required className={`${field} mt-1 text-center text-3xl tracking-[0.5em]`} />
           </label>
-          <button type="submit" disabled={!ready || busy} className={gold}>
+          <button type="submit" disabled={!ready || busy} className={primary}>
             {t("pinSubmit")}
           </button>
         </form>
@@ -265,9 +266,9 @@ export function GuestActions({
 
   if (view === "name") {
     return (
-      <section className="sk-rise mt-10">
-        <h2 className="sk-display text-center text-[1.75rem]">{t("nameTitle")}</h2>
-        <p className="mt-2 text-center text-[var(--sk-ivory)]/80">{t("nameHelp")}</p>
+      <section className={`${panel} mt-6`}>
+        <h2 className="text-center font-serif text-[1.75rem]">{t("nameTitle")}</h2>
+        <p className="mt-2 text-center text-muted">{t("nameHelp")}</p>
         <form
           method="post"
           className="mt-6 space-y-6"
@@ -280,7 +281,7 @@ export function GuestActions({
             <span className="sr-only">{t("nameLabel")}</span>
             <input name="displayName" defaultValue={name} key={name} required maxLength={40} autoComplete="name" placeholder={t("namePlaceholder")} className={`${field} text-center`} />
           </label>
-          <button type="submit" disabled={!ready || busy} className={gold}>
+          <button type="submit" disabled={!ready || busy} className={primary}>
             {t("nameSubmit")}
           </button>
         </form>
@@ -291,14 +292,16 @@ export function GuestActions({
 
   if (view === "thanks") {
     return (
-      <section className="sk-rise mt-10 flex flex-col items-center text-center">
-        <Bunga className="size-16 text-[var(--sk-gold)]" />
-        <h2 className="sk-display mt-5 text-4xl">{t("thanksTitle")}</h2>
-        <p className="mt-3 max-w-xs text-[var(--sk-ivory)]/85">{t("thanksBody")}</p>
-        {processingNote ? <p className="mt-2 max-w-xs text-sm text-[var(--sk-ivory)]/75">{t("processingNote")}</p> : null}
+      <section className={`${panel} mt-6 flex flex-col items-center text-center`}>
+        <span className="text-brand">
+          <CheckIcon size={56} />
+        </span>
+        <h2 className="mt-4 font-serif text-4xl">{t("thanksTitle")}</h2>
+        <p className="mt-3 max-w-xs text-muted">{t("thanksBody")}</p>
+        {processingNote ? <p className="mt-2 max-w-xs text-sm text-muted">{t("processingNote")}</p> : null}
         <div className="mt-8 w-full space-y-3">
           {galleryHref ? (
-            <a href={galleryHref} className={gold}>
+            <a href={galleryHref} className={primary}>
               {t("viewGallery")}
             </a>
           ) : null}
@@ -352,14 +355,10 @@ export function GuestActions({
               maxLength={1000}
               rows={5}
               placeholder={t("wishPlaceholder")}
-              className="mt-2 block w-full rounded-[4px] border border-[#2a211a]/25 bg-white/60 p-4 text-lg placeholder:text-[#2a211a]/55 focus:border-[var(--sk-ground)]"
+              className="mt-2 block w-full rounded-2xl border border-[var(--st-line)] bg-[var(--st-ground-deep)] p-4 text-lg text-ink placeholder:text-muted focus:border-brand focus:outline-none"
             />
           </label>
-          <button
-            type="submit"
-            disabled={!ready || busy || !consent}
-            className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--sk-ground)] px-6 text-lg font-semibold text-[var(--sk-ivory)] disabled:opacity-50"
-          >
+          <button type="submit" disabled={!ready || busy || !consent} className={primary}>
             {busy ? t("sending") : t("wishSubmit")}
           </button>
         </form>
@@ -368,27 +367,36 @@ export function GuestActions({
     );
   }
 
-  // Menu: the shutter first, then the other ways to share.
+  // Menu: consent and shots in the page flow, the dock pinned to the bottom of the screen.
   const done = queue.filter((item) => item.stage === "done").length;
   const locked = !consent || !ready;
+  const dockItem =
+    "flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-0.5 text-center text-[0.8125rem] font-semibold leading-tight text-ink disabled:opacity-50";
   const secondary = [
     { key: "video" as const, label: t("video"), icon: <VideoIcon />, enabled: features.video, note: features.video ? null : t("premiumOnly") },
     { key: "voice" as const, label: t("voice"), icon: <VoiceIcon />, enabled: features.voice, note: null },
     { key: "wish" as const, label: t("wish"), icon: <WishIcon />, enabled: true, note: null },
   ];
+  const dockButton = (action: (typeof secondary)[number]) => (
+    <button key={action.key} type="button" disabled={locked || !action.enabled} onClick={() => setView(action.key)} className={dockItem}>
+      {action.icon}
+      <span>{action.label}</span>
+      {action.note ? <span className="-mt-1 text-[0.6875rem] font-normal text-muted">{action.note}</span> : null}
+    </button>
+  );
 
   return (
-    <section className="sk-rise mt-8">
+    <section className="mt-5">
       <div className="flex items-center justify-between gap-3">
         <p className="text-lg">{t("hello", { name })}</p>
-        <button type="button" onClick={() => setView("name")} className="min-h-11 px-1 text-sm text-[var(--sk-ivory)]/80 underline underline-offset-4">
+        <button type="button" onClick={() => setView("name")} className="min-h-11 px-1 text-sm text-muted underline underline-offset-4">
           {t("changeName")}
         </button>
       </div>
 
       {consent ? (
         // Agreed: one quiet line that still shows the choice and can undo it.
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 text-sm text-[var(--sk-ivory)]/80">
+        <div className="flex flex-wrap items-center gap-x-4 text-sm text-muted">
           <label className="flex min-h-11 items-center gap-2">
             <input type="checkbox" checked={consent} onChange={(e) => agree(e.target.checked)} className="size-4" />
             {t("consentAgree")}
@@ -398,98 +406,74 @@ export function GuestActions({
           </a>
         </div>
       ) : (
-        <div className="pb-paper mt-6 rounded-[6px] p-5 text-[0.95rem] leading-relaxed text-[#2a211a]">
+        <div className="mt-2 rounded-3xl bg-surface px-4 py-3 text-sm leading-relaxed ring-1 ring-[var(--st-line)]">
           <p>{t("consent")}</p>
-          <a href={privacyHref} className="mt-1 inline-flex min-h-11 items-center font-medium underline underline-offset-4">
-            {t("consentPrivacyLink")}
-          </a>
-          <label className="mt-1 flex min-h-11 items-center gap-3 font-semibold">
-            <input type="checkbox" checked={consent} onChange={(e) => agree(e.target.checked)} className="size-5 accent-[var(--sk-ground)]" />
-            {t("consentAgree")}
-          </label>
+          <div className="flex flex-wrap items-center justify-between gap-x-4">
+            <label className="flex min-h-11 items-center gap-3 font-semibold">
+              <input type="checkbox" checked={consent} onChange={(e) => agree(e.target.checked)} className="size-5" />
+              {t("consentAgree")}
+            </label>
+            <a href={privacyHref} className="inline-flex min-h-11 items-center underline underline-offset-4">
+              {t("consentPrivacyLink")}
+            </a>
+          </div>
         </div>
       )}
 
-      <div className="mt-7 flex flex-col items-center">
-        <button
-          type="button"
-          disabled={locked || outOfShots}
-          onClick={() => cameraInput.current?.click()}
-          className="sk-shutter grid size-32 place-items-center rounded-full text-[var(--sk-ivory)] disabled:cursor-not-allowed"
-          aria-describedby={shots ? "shots-line" : undefined}
-        >
-          <CameraIcon size={40} />
-          <span className="sr-only">{outOfShots ? t("shotsOut") : t("shutter")}</span>
-        </button>
-        <p className="sk-display mt-4 text-2xl" aria-hidden>
-          {outOfShots ? t("shotsOut") : t("shutter")}
-        </p>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3">
         {shots ? (
-          <p id="shots-line" className="mt-1 text-sm text-[var(--sk-gold-light)] tabular-nums">
+          <p id="shots-line" className="rounded-full bg-surface px-3 py-1 text-sm font-semibold tabular-nums ring-1 ring-[var(--st-line)]">
             {t("shotsLeft", { left: shotsLeft ?? 0, limit: shots.limit })}
           </p>
-        ) : null}
+        ) : (
+          <span />
+        )}
         <button
           type="button"
           disabled={locked || outOfShots}
           onClick={() => galleryInput.current?.click()}
-          className="mt-3 inline-flex min-h-11 items-center gap-2 px-3 font-medium text-[var(--sk-ivory)] underline decoration-[var(--sk-gold)] underline-offset-[6px] disabled:opacity-50"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-medium text-ink underline underline-offset-4 disabled:opacity-50"
         >
           <GalleryIcon />
           {t("fromGallery")}
         </button>
-        <input
-          ref={cameraInput}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          disabled={locked || outOfShots}
-          className="sr-only"
-          tabIndex={-1}
-          aria-hidden
-          data-testid="camera-input"
-          onChange={(e) => {
-            addFiles(e.target.files);
-            e.target.value = "";
-          }}
-        />
-        <input
-          ref={galleryInput}
-          type="file"
-          accept="image/*"
-          multiple
-          disabled={locked || outOfShots}
-          className="sr-only"
-          tabIndex={-1}
-          aria-hidden
-          data-testid="photo-input"
-          onChange={(e) => {
-            addFiles(e.target.files);
-            e.target.value = "";
-          }}
-        />
-        {skipped > 0 ? (
-          <p role="status" className="mt-3 text-center text-sm text-[#ffd9d2]">
-            {t("shotsSkipped", { count: skipped })}
-          </p>
-        ) : null}
       </div>
-
-      <div className="mt-10 grid grid-cols-3 divide-x divide-[var(--sk-gold)]/35 border-y border-[var(--sk-gold)]/35">
-        {secondary.map((action) => (
-          <button
-            key={action.key}
-            type="button"
-            disabled={locked || !action.enabled}
-            onClick={() => setView(action.key)}
-            className="flex min-h-24 flex-col items-center justify-center gap-2 px-2 text-[var(--sk-ivory)] hover:bg-white/5 disabled:opacity-45"
-          >
-            <span className="text-[var(--sk-gold-light)]">{action.icon}</span>
-            <span className="font-medium">{action.label}</span>
-            {action.note ? <span className="-mt-1 text-xs text-[var(--sk-ivory)]/75">{action.note}</span> : null}
-          </button>
-        ))}
-      </div>
+      {outOfShots ? <p className="mt-1 text-sm font-semibold text-brand">{t("shotsOut")}</p> : null}
+      {skipped > 0 ? (
+        <p role="status" className="mt-2 text-sm text-danger">
+          {t("shotsSkipped", { count: skipped })}
+        </p>
+      ) : null}
+      <input
+        ref={cameraInput}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        disabled={locked || outOfShots}
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden
+        data-testid="camera-input"
+        onChange={(e) => {
+          addFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      <input
+        ref={galleryInput}
+        type="file"
+        accept="image/*"
+        multiple
+        disabled={locked || outOfShots}
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden
+        data-testid="photo-input"
+        onChange={(e) => {
+          addFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
 
       <MyPhotos
         photos={queue.map((item) => ({
@@ -509,11 +493,37 @@ export function GuestActions({
         }}
       />
 
-      {galleryHref ? (
-        <a href={galleryHref} className="mt-8 inline-flex min-h-11 items-center gap-2 font-medium text-[var(--sk-gold-light)] underline underline-offset-4">
-          {t("viewGallery")}
-        </a>
-      ) : null}
+      {/* Keeps the last controls clear of the dock. */}
+      <div aria-hidden className="h-[calc(8rem+env(safe-area-inset-bottom))]" />
+
+      <nav
+        aria-label={t("chooseAction")}
+        data-testid="guest-dock"
+        className="st-glass fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-20 mx-auto grid max-w-md grid-cols-5 items-center rounded-[2.5rem] px-1 py-1.5"
+      >
+        {galleryHref ? (
+          <a href={galleryHref} className={dockItem}>
+            <GalleryIcon size={26} />
+            <span>{t("dockGallery")}</span>
+          </a>
+        ) : (
+          <span aria-hidden />
+        )}
+        {dockButton(secondary[0]!)}
+        <button
+          type="button"
+          disabled={locked || outOfShots}
+          onClick={() => cameraInput.current?.click()}
+          className="st-shutter mx-auto -mt-5 grid size-[4.5rem] place-items-center rounded-full bg-brand text-on-brand shadow-lg ring-4 ring-[var(--color-cream)] disabled:cursor-not-allowed disabled:opacity-50"
+          aria-describedby={shots ? "shots-line" : undefined}
+          data-testid="guest-shutter"
+        >
+          <CameraIcon size={34} />
+          <span className="sr-only">{outOfShots ? t("shotsOut") : t("shutter")}</span>
+        </button>
+        {dockButton(secondary[1]!)}
+        {dockButton(secondary[2]!)}
+      </nav>
     </section>
   );
 }
