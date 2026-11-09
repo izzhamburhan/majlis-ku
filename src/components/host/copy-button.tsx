@@ -12,7 +12,7 @@ export function CopyButton({ text, label, copiedLabel }: { text: string; label: 
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }}
-      className="min-h-11 rounded-full border border-ink/20 bg-white px-4 text-sm font-medium"
+      className="min-h-11 rounded-full border border-[var(--st-line)] bg-surface px-4 text-sm font-medium"
     >
       {copied ? copiedLabel : label}
     </button>

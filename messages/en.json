@@ -24,10 +24,69 @@
     "heroTitle": "Every memory of your event, in one place",
     "heroBody": "Guests scan one QR code and share photos, videos, voice messages and wishes. No app, no account.",
     "cta": "Create your event",
-    "guestbookTitle": "Digital guestbook",
-    "guestbookBody": "A live gallery and a slideshow for the screen at the venue.",
     "ecardTitle": "E-invitation & RSVP",
-    "ecardBody": "Share a link on WhatsApp. Guests see the details, map and countdown, and RSVP."
+    "photos": {
+      "joy": "Smiling newlyweds hugging in a field",
+      "pink": "Bride and groom in pink traditional clothes",
+      "mono": "Bride holding a bouquet and leaning on her groom, black and white",
+      "outdoor": "Groom carrying his bride outdoors",
+      "leaves": "Bride in a white hijab in front of green leaves",
+      "henna": "Bride in a crown and hijab with henna on her hand",
+      "veil": "Bride in a white hijab and veil"
+    },
+    "strip": {
+      "title": "Every guest sees your event from a different angle",
+      "badge": "Example",
+      "label": "Example guest memories",
+      "names": {
+        "pink": "Farah",
+        "henna": "Siti Nur",
+        "outdoor": "Hafiz",
+        "leaves": "Azim",
+        "mono": "Mak Long",
+        "veil": "Danish"
+      }
+    },
+    "steps": {
+      "title": "How it works",
+      "one": {
+        "title": "Print the QR card",
+        "body": "Download the QR card PDF, print it and put it on the tables."
+      },
+      "two": {
+        "title": "Scan and share",
+        "body": "No app. No password. Just a name."
+      },
+      "three": {
+        "title": "It shows up in the gallery, instantly",
+        "body": "A live gallery, and you stay in control."
+      }
+    },
+    "venue": {
+      "title": "The whole hall sees it together",
+      "body": "A slideshow for a screen or projector, with your guests' names and wishes.",
+      "sample": "Example wishes on the screen",
+      "wishOne": "Congratulations to the newlyweds. May you be happy always.",
+      "wishOneBy": "Mak Long",
+      "wishTwo": "Congratulations, Aisyah! You look so beautiful today.",
+      "wishTwoBy": "Farah"
+    },
+    "privacy": {
+      "title": "Private memories stay private",
+      "one": "A private gallery by default, with an optional PIN.",
+      "two": "Guests are told before they upload.",
+      "three": "Files are deleted when the plan period ends, or whenever you choose."
+    },
+    "pricing": {
+      "title": "Plans and pricing",
+      "uploads": "{count, plural, one {# upload} other {# uploads}}",
+      "unlimited": "Unlimited uploads (fair use)",
+      "retention": "Kept for {days, plural, one {# day} other {# days}}",
+      "gallery": "Guest gallery"
+    },
+    "closing": {
+      "title": "Ready for the big day?"
+    }
   },
   "auth": {
     "title": "Sign in as a host",
@@ -112,6 +171,7 @@
     "itemsUnlimited": "{used} items (unlimited)",
     "storageUsed": "{size} of storage used",
     "keptUntil": "Media kept until {date}",
+    "openVenueScreen": "Open venue screen",
     "noGallery": "This plan does not include the guest gallery."
   },
   "eventSettings": {
@@ -195,9 +255,11 @@
     "sending": "Sending…",
     "thanksTitle": "Thank you!",
     "thanksBody": "Your memories have been sent to the hosts.",
+    "dockGallery": "Gallery",
     "viewGallery": "View gallery",
     "addMore": "Share more",
     "galleryTitle": "{names}'s gallery",
+    "addMemory": "Add a memory",
     "back": "Back to the event",
     "errors": {
       "limit_reached": "This gallery is full.",

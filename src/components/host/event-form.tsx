@@ -37,7 +37,7 @@ export type EventFormLabels = Record<
   string
 > & { types: Record<string, string> };
 
-const input = "mt-1 block min-h-12 w-full rounded-xl border bg-white px-4";
+const input = "mt-1 block min-h-12 w-full rounded-xl border bg-[var(--st-ground-deep)] px-4";
 
 export function EventForm({
   action,
@@ -50,13 +50,13 @@ export function EventForm({
 }) {
   const [state, formAction, pending] = useActionState(action, {});
   const bad = (name: string) => state.errors?.includes(name);
-  const border = (name: string) => (bad(name) ? "border-red-500" : "border-ink/20");
+  const border = (name: string) => (bad(name) ? "border-danger" : "border-[var(--st-line)]");
 
   const text = (name: keyof EventFormValues, label: string, opts: { placeholder?: string; required?: boolean; type?: string } = {}) => (
     <label className="block">
       <span className="text-sm font-medium">
         {label}
-        {opts.required ? null : <span className="font-normal text-ink/50"> ({labels.optional})</span>}
+        {opts.required ? null : <span className="font-normal text-muted"> ({labels.optional})</span>}
       </span>
       <input
         name={name}
@@ -73,12 +73,12 @@ export function EventForm({
   return (
     <form action={formAction} className="space-y-4">
       {state.errors?.length ? (
-        <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">
+        <p role="alert" className="rounded-lg bg-surface p-3 text-danger ring-1 ring-[var(--color-danger)]">
           {labels.invalid}
         </p>
       ) : null}
       {state.saved ? (
-        <p role="status" className="rounded-lg bg-green-50 p-3 text-green-800">
+        <p role="status" className="rounded-lg bg-surface p-3 text-success ring-1 ring-[var(--color-success)]">
           {labels.saved}
         </p>
       ) : null}
@@ -101,7 +101,7 @@ export function EventForm({
       {text("wazeUrl", labels.wazeUrl, { type: "url", placeholder: "https://waze.com/ul/…" })}
       <label className="block">
         <span className="text-sm font-medium">
-          {labels.welcomeText} <span className="font-normal text-ink/50">({labels.optional})</span>
+          {labels.welcomeText} <span className="font-normal text-muted">({labels.optional})</span>
         </span>
         <textarea
           name="welcomeText"
@@ -109,17 +109,17 @@ export function EventForm({
           placeholder={labels.welcomePlaceholder}
           rows={3}
           maxLength={500}
-          className={`mt-1 block w-full rounded-xl border bg-white p-4 ${border("welcomeText")}`}
+          className={`mt-1 block w-full rounded-xl border bg-[var(--st-ground-deep)] p-4 ${border("welcomeText")}`}
         />
       </label>
       <label className="flex items-center gap-3">
-        <input type="color" name="themeColor" defaultValue={defaults.themeColor} className="h-12 w-16 rounded-lg border border-ink/20" />
+        <input type="color" name="themeColor" defaultValue={defaults.themeColor} className="h-12 w-16 rounded-lg border border-[var(--st-line)]" />
         <span className="text-sm font-medium">{labels.themeColor}</span>
       </label>
       <button
         type="submit"
         disabled={pending}
-        className="min-h-12 w-full rounded-full bg-brand px-6 font-medium text-white hover:bg-brand-dark disabled:opacity-60 sm:w-auto"
+        className="min-h-12 w-full rounded-full bg-brand px-6 font-medium text-on-brand hover:bg-brand-dark disabled:opacity-60 sm:w-auto"
       >
         {labels.submit}
       </button>

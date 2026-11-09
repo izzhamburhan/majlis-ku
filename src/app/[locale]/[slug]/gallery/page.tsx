@@ -6,8 +6,10 @@ import { GalleryToolbar, nextPageHref } from "@/components/gallery/gallery-toolb
 import { LiveItems } from "@/components/gallery/live-items";
 import { galleryLabels } from "@/components/host/labels";
 import { LocaleToggle } from "@/components/locale-toggle";
+import { StoriRoot } from "@/components/stori-root";
 import { getPathname, Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
+import { display, ui } from "@/lib/fonts";
 import { readGuestContext } from "@/server/guests/context";
 import { GALLERY_FILTERS, galleryQuerySchema, listGallery } from "@/server/gallery/service";
 
@@ -38,47 +40,56 @@ export default async function GuestGalleryPage({
   const base = `/${slug}/gallery`;
 
   return (
-    <main className="mx-auto max-w-5xl px-4 pb-12">
-      <div className="flex items-center justify-between py-3">
-        <Link href={`/${slug}`} className="inline-flex min-h-11 items-center text-sm text-ink/70 underline">
-          ← {t("back")}
-        </Link>
-        <LocaleToggle locale={locale as Locale} label={tc("switchTo")} />
-      </div>
-      <h1 className="mb-4 font-serif text-3xl">{t("galleryTitle", { names: event.hostNames })}</h1>
-      <div className="space-y-4">
-        <GalleryToolbar
-          base={base}
-          formAction={getPathname({ href: base, locale: locale as Locale })}
-          query={query}
-          labels={labels}
-          filters={GALLERY_FILTERS}
-        />
-        {!query.after && query.sort === "newest" ? (
-          <LiveItems
-            streamUrl={`/api/e/${slug}/stream`}
-            filter={query.filter}
-            q={query.q}
+    // The bottom padding keeps the report link clear of the floating "add" link.
+    <StoriRoot className={`${display.variable} ${ui.variable}`}>
+      <main className="mx-auto max-w-5xl px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))]">
+        <div className="flex items-center justify-between py-3">
+          <Link href={`/${slug}`} className="inline-flex min-h-11 items-center text-sm text-muted underline">
+            ← {t("back")}
+          </Link>
+          <LocaleToggle locale={locale as Locale} label={tc("switchTo")} />
+        </div>
+        <h1 className="mb-4 font-serif text-3xl">{t("galleryTitle", { names: event.hostNames })}</h1>
+        <div className="space-y-4">
+          <GalleryToolbar
+            base={base}
+            formAction={getPathname({ href: base, locale: locale as Locale })}
+            query={query}
             labels={labels}
-            liveLabel={tg("live")}
-            newLabel={tg("newWord")}
-            showStatus={false}
+            filters={GALLERY_FILTERS}
           />
-        ) : null}
-        <GalleryGrid items={page.items} labels={labels} showStatus={false} />
-        {page.nextCursor ? (
-          <div className="text-center">
-            <Link href={nextPageHref(base, query, page.nextCursor)} className="inline-flex min-h-11 items-center rounded-full bg-white px-6 font-medium shadow-sm">
-              {tg("loadMore")}
-            </Link>
-          </div>
-        ) : null}
-      </div>
-      <p className="mt-8 text-center">
-        <Link href={`/${slug}/report`} className="inline-flex min-h-11 items-center text-sm text-ink/60 underline">
-          {tr("link")}
-        </Link>
-      </p>
-    </main>
+          {!query.after && query.sort === "newest" ? (
+            <LiveItems
+              streamUrl={`/api/e/${slug}/stream`}
+              filter={query.filter}
+              q={query.q}
+              labels={labels}
+              liveLabel={tg("live")}
+              newLabel={tg("newWord")}
+              showStatus={false}
+            />
+          ) : null}
+          <GalleryGrid items={page.items} labels={labels} showStatus={false} />
+          {page.nextCursor ? (
+            <div className="text-center">
+              <Link href={nextPageHref(base, query, page.nextCursor)} className="inline-flex min-h-11 items-center rounded-full bg-surface px-6 font-medium shadow-sm">
+                {tg("loadMore")}
+              </Link>
+            </div>
+          ) : null}
+        </div>
+        <p className="mt-8 text-center">
+          <Link href={`/${slug}/report`} className="inline-flex min-h-11 items-center text-sm text-muted underline">
+            {tr("link")}
+          </Link>
+        </p>
+      </main>
+      <Link
+        href={`/${slug}`}
+        className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-20 inline-flex min-h-12 -translate-x-1/2 items-center rounded-full bg-brand px-6 font-medium whitespace-nowrap text-on-brand shadow-lg hover:bg-brand-dark"
+      >
+        {t("addMemory")}
+      </Link>
+    </StoriRoot>
   );
 }

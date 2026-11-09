@@ -47,7 +47,7 @@ export function GalleryToolbar({
             key={filter}
             href={href(base, { ...query, filter })}
             className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-medium ${
-              query.filter === filter ? "bg-brand text-white" : "bg-white text-ink/80"
+              query.filter === filter ? "bg-brand text-on-brand" : "bg-surface text-muted"
             }`}
           >
             {labels[FILTER_LABEL[filter]]}
@@ -62,13 +62,13 @@ export function GalleryToolbar({
           defaultValue={query.q}
           placeholder={labels.search}
           aria-label={labels.search}
-          className="min-h-11 min-w-0 flex-1 rounded-full border border-ink/20 bg-white px-4"
+          className="min-h-11 min-w-0 flex-1 rounded-full border border-ink/20 bg-surface px-4"
         />
-        <select name="sort" defaultValue={query.sort} aria-label={labels.sortNewest} className="min-h-11 rounded-full border border-ink/20 bg-white px-3">
+        <select name="sort" defaultValue={query.sort} aria-label={labels.sortNewest} className="min-h-11 rounded-full border border-ink/20 bg-surface px-3">
           <option value="newest">{labels.sortNewest}</option>
           <option value="oldest">{labels.sortOldest}</option>
         </select>
-        <button type="submit" className="min-h-11 rounded-full bg-ink px-4 text-sm font-medium text-white">
+        <button type="submit" className="min-h-11 rounded-full bg-ink px-4 text-sm font-medium text-on-ink">
           {labels.searchButton}
         </button>
       </form>

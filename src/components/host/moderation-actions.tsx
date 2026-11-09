@@ -33,7 +33,7 @@ export function ModerationActions({
   return (
     <div className="flex gap-1" aria-busy={pending}>
       {moderation === "PENDING_APPROVAL" ? (
-        <button type="button" disabled={pending} onClick={() => run("approve")} className={`${button} bg-green-600 text-white`}>
+        <button type="button" disabled={pending} onClick={() => run("approve")} className={`${button} bg-green-600 text-white`} /* stori-keep: green button */>
           {labels.approve}
         </button>
       ) : null}
@@ -46,7 +46,7 @@ export function ModerationActions({
           {labels.hide}
         </button>
       )}
-      <button type="button" disabled={pending} onClick={() => run("delete")} className={`${button} text-red-700`}>
+      <button type="button" disabled={pending} onClick={() => run("delete")} className={`${button} text-danger`}>
         {labels.delete}
       </button>
     </div>
@@ -66,7 +66,7 @@ export function ApproveAllButton({ eventId, label }: { eventId: string; label: s
           router.refresh();
         })
       }
-      className="min-h-11 rounded-full bg-green-600 px-4 text-sm font-medium text-white disabled:opacity-50"
+      className="min-h-11 rounded-full bg-green-600 px-4 text-sm font-medium text-white disabled:opacity-50" /* stori-keep: green button */
     >
       {label}
     </button>

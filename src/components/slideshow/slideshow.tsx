@@ -205,7 +205,7 @@ export function Slideshow({
           shareUrl={shareUrl}
           labels={{ scan: labels.scan, qrAlt: labels.qrAlt, empty: labels.empty, from: labels.photobookFrom, fromAnon: labels.photobookFromAnon }}
         />
-        <div className="absolute bottom-10 left-12 z-30 flex gap-2 text-[var(--sk-ivory)]">{controls}</div>
+        <div className="absolute bottom-10 left-12 z-30 flex gap-2 text-white">{controls}</div>
         {settingsOpen ? <SettingsDialog options={options} labels={labels} onChange={change} onClose={closeSettings} /> : null}
       </div>
     );

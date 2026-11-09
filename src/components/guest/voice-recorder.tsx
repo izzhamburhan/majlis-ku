@@ -117,8 +117,8 @@ export default function VoiceRecorder({
   if (!supported) {
     return (
       <div className="mt-4">
-        <p className="text-sm text-ink/70">{t("voiceNoMic")}</p>
-        <label className={`${button} mt-3 inline-flex cursor-pointer items-center justify-center bg-brand text-white ${consent && !busy ? "" : "pointer-events-none opacity-50"}`}>
+        <p className="text-sm text-muted">{t("voiceNoMic")}</p>
+        <label className={`${button} mt-3 inline-flex cursor-pointer items-center justify-center bg-brand text-on-brand ${consent && !busy ? "" : "pointer-events-none opacity-50"}`}>
           🎙️ {t("voicePick")}
           <input
             type="file"
@@ -134,7 +134,7 @@ export default function VoiceRecorder({
           />
         </label>
         {error ? (
-          <p role="alert" className="mt-3 text-sm text-red-700">
+          <p role="alert" className="mt-3 text-sm text-danger">
             {error}
           </p>
         ) : null}
@@ -147,17 +147,17 @@ export default function VoiceRecorder({
       {recording ? (
         <>
           <p className="text-center text-2xl font-medium tabular-nums" aria-live="polite">
-            <span aria-hidden className="mr-2 inline-block size-3 animate-pulse rounded-full bg-red-600" />
+            <span aria-hidden className="mr-2 inline-block size-3 animate-pulse rounded-full bg-danger" />
             {t("voiceRecording", { time: formatDuration(elapsed) })}
           </p>
-          <button type="button" onClick={stop} className={`${button} bg-ink text-white`}>
+          <button type="button" onClick={stop} className={`${button} bg-ink text-on-ink`}>
             ⏹ {t("voiceStop")}
           </button>
         </>
       ) : result ? (
         <>
           <audio controls src={result.url} className="w-full" />
-          <button type="button" disabled={!consent || busy} onClick={() => void send(result.blob, result.seconds)} className={`${button} bg-brand text-white`}>
+          <button type="button" disabled={!consent || busy} onClick={() => void send(result.blob, result.seconds)} className={`${button} bg-brand text-on-brand`}>
             {busy ? t(stage as Stage) : t("voiceSend")}
           </button>
           <button type="button" disabled={busy} onClick={() => void start()} className={`${button} border border-ink/20`}>
@@ -170,13 +170,13 @@ export default function VoiceRecorder({
           ) : null}
         </>
       ) : (
-        <button type="button" disabled={!consent} onClick={() => void start()} className={`${button} bg-brand text-white`}>
+        <button type="button" disabled={!consent} onClick={() => void start()} className={`${button} bg-brand text-on-brand`}>
           🎙️ {t("voiceStart")}
         </button>
       )}
-      <p className="text-center text-sm text-ink/60">{t("voiceMax")}</p>
+      <p className="text-center text-sm text-muted">{t("voiceMax")}</p>
       {error ? (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       ) : null}

@@ -35,12 +35,12 @@ export function SettingsForm({
   return (
     <form action={formAction} className="space-y-5">
       {state.errors?.length ? (
-        <p role="alert" className="rounded-lg bg-red-50 p-3 text-red-800">
+        <p role="alert" className="rounded-lg bg-surface p-3 text-danger ring-1 ring-[var(--color-danger)]">
           {labels.invalid}
         </p>
       ) : null}
       {state.saved ? (
-        <p role="status" className="rounded-lg bg-green-50 p-3 text-green-800">
+        <p role="status" className="rounded-lg bg-surface p-3 text-success ring-1 ring-[var(--color-success)]">
           {labels.saved}
         </p>
       ) : null}
@@ -57,7 +57,7 @@ export function SettingsForm({
         <input type="checkbox" name="requireApproval" defaultChecked={defaults.requireApproval} className="mt-1 size-5" />
         <span>
           <span className="font-medium">{labels.approval}</span>
-          <span className="block text-sm text-ink/60">{labels.approvalHelp}</span>
+          <span className="block text-sm text-muted">{labels.approvalHelp}</span>
         </span>
       </label>
       <label className="block">
@@ -73,9 +73,9 @@ export function SettingsForm({
           step={1}
           defaultValue={defaults.shotsPerGuest ?? ""}
           placeholder={labels.shotsUnlimited}
-          className="mt-1 block min-h-12 w-40 rounded-xl border border-ink/20 bg-white px-4"
+          className="mt-1 block min-h-12 w-40 rounded-xl border border-[var(--st-line)] bg-[var(--st-ground-deep)] px-4"
         />
-        <span className="mt-1 block text-sm text-ink/60">{labels.shotsHelp}</span>
+        <span className="mt-1 block text-sm text-muted">{labels.shotsHelp}</span>
       </label>
       <label className="block">
         <span className="text-sm font-medium">{labels.pin}</span>
@@ -85,12 +85,12 @@ export function SettingsForm({
           pattern="\d{4,8}"
           maxLength={8}
           autoComplete="off"
-          className="mt-1 block min-h-12 w-40 rounded-xl border border-ink/20 bg-white px-4 tracking-widest"
+          className="mt-1 block min-h-12 w-40 rounded-xl border border-[var(--st-line)] bg-[var(--st-ground-deep)] px-4 tracking-widest"
         />
-        <span className="mt-1 block text-sm text-ink/60">{labels.pinHelp}</span>
+        <span className="mt-1 block text-sm text-muted">{labels.pinHelp}</span>
       </label>
       {defaults.hasPin ? (
-        <div className="rounded-xl bg-white p-3 text-sm">
+        <div className="rounded-xl bg-surface p-3 text-sm">
           <p>{labels.pinSet}</p>
           <label className="mt-2 flex min-h-11 items-center gap-3">
             <input type="checkbox" name="clearPin" className="size-5" />
@@ -98,7 +98,7 @@ export function SettingsForm({
           </label>
         </div>
       ) : null}
-      <button type="submit" disabled={pending} className="min-h-12 rounded-full bg-brand px-6 font-medium text-white disabled:opacity-60">
+      <button type="submit" disabled={pending} className="min-h-12 rounded-full bg-brand px-6 font-medium text-on-brand disabled:opacity-60">
         {labels.save}
       </button>
     </form>

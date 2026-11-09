@@ -60,8 +60,8 @@ export function LiveItems({
 
   return (
     <div className="space-y-2">
-      <p className="flex items-center gap-2 text-sm text-ink/60" data-testid="live-status" data-connected={connected}>
-        <span aria-hidden className={`inline-block size-2 rounded-full ${connected ? "bg-green-500" : "bg-ink/30"}`} />
+      <p className="flex items-center gap-2 text-sm text-muted" data-testid="live-status" data-connected={connected}>
+        <span aria-hidden className={`inline-block size-2 rounded-full ${connected ? "bg-success" : "bg-[var(--st-line)]"}`} />
         {liveLabel}
         {items.length > 0 ? <span className="font-medium text-ink">· {items.length} {newLabel}</span> : null}
       </p>

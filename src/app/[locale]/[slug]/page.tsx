@@ -7,11 +7,12 @@ import { cache } from "react";
 import { GuestActions } from "@/components/guest/guest-actions";
 import { SiteFooter } from "@/components/site-footer";
 import { LocaleToggle } from "@/components/locale-toggle";
+import { StoriRoot } from "@/components/stori-root";
 import { getPathname, Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { formatEventDate } from "@/lib/dates";
 import { display, ui } from "@/lib/fonts";
-import { IVORY, songketPalette, songketVars } from "@/lib/songket";
+import { STORI } from "@/lib/stori";
 import { readGuestContext } from "@/server/guests/context";
 import { guestPageStats } from "@/server/guests/stats";
 import { MEDIA_URL_TTL_SEC, storage } from "@/server/media/storage";
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return context ? { title: context.event.hostNames, robots: { index: false, follow: false } } : {};
 }
 
-/** "Aisyah & Daniel" → "A & D", for the arch when there is no cover photo. */
+/** "Aisyah & Daniel" → "A & D", for the hero when there is no cover photo. */
 function monogram(hostNames: string): string {
   const parts = hostNames.split(/\s*(?:&|\+| dan | and )\s*/i).filter(Boolean);
   return parts.length > 1 ? parts.map((p) => p.trim().charAt(0).toUpperCase()).join(" & ") : hostNames.trim().charAt(0).toUpperCase();
@@ -47,68 +48,73 @@ export default async function GuestEventPage({ params }: { params: Promise<{ loc
   ]);
   const coverUrl = event.coverKey && pinOk ? await storage().getDownloadUrl(event.coverKey, { expiresInSec: MEDIA_URL_TTL_SEC }) : null;
   const galleryHref = event.galleryVisibility === "GUESTS" ? getPathname({ href: `/${slug}/gallery`, locale: locale as Locale }) : null;
+  const hasDock = event.plan.includesGallery;
 
   return (
-    <div className={`songket ${display.variable} ${ui.variable} flex min-h-dvh flex-col`} style={songketVars(event.themeColor)}>
-      {/* Overscroll and the area under the page take the deep ground, not the site's cream. */}
-      <style>{`body{background:${songketPalette(event.themeColor).groundDeep}}`}</style>
-      <div className="sk-band shrink-0" aria-hidden />
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-12">
-        <div className="flex justify-end pt-3 [&_a]:border-[var(--sk-gold)]/50 [&_a]:text-[var(--sk-ivory)] [&_a:hover]:bg-white/5">
-          <LocaleToggle locale={locale as Locale} label={tc("switchTo")} />
-        </div>
-
-        <header className="sk-rise mt-2 flex flex-col items-center text-center">
-          <div className="sk-arch relative aspect-[4/5] w-[44%] max-w-48 overflow-hidden bg-[var(--sk-ground-lift)]">
+    // The bottom padding keeps the report link and footer clear of the floating dock.
+    <StoriRoot className={`${display.variable} ${ui.variable} ${hasDock ? "pb-[calc(6.5rem+env(safe-area-inset-bottom))]" : ""}`}>
+      <div className="mx-auto flex w-full max-w-lg flex-col">
+        <section className="st-screen-min relative flex flex-col">
+          {/* The cover fills the first screen. Without one (or before the PIN), the dusk ground carries the monogram. */}
+          <div aria-hidden className="st-screen absolute inset-x-0 top-0 overflow-hidden bg-[var(--st-ground-deep)]">
             {coverUrl ? (
-              <img src={coverUrl} alt="" className="h-full w-full object-cover" />
+              <img src={coverUrl} alt="" fetchPriority="high" decoding="async" className="h-full w-full object-cover" />
             ) : (
-              <div className="songket flex h-full w-full items-center justify-center bg-[var(--sk-ground-lift)]">
-                <span className="sk-display text-4xl text-[var(--sk-gold-light)]">{monogram(event.hostNames)}</span>
+              <div className="flex h-3/5 items-center justify-center">
+                <span className="font-serif text-6xl text-brand">{monogram(event.hostNames)}</span>
               </div>
             )}
           </div>
-          <h1 className="sk-display mt-7 text-[2.35rem] leading-[1.08] text-balance">{event.hostNames}</h1>
-          <p className="mt-3 text-[var(--sk-ivory)]/90">
-            {types(event.type)}
-            {event.venueName ? ` · ${event.venueName}` : ""}
-          </p>
-          <p className="mt-1 text-sm text-[var(--sk-ivory)]/80">{formatEventDate(event.startsAt, locale as Locale)}</p>
+
+          <div className="relative z-10 flex justify-end px-5 pt-3">
+            <span className="st-glass rounded-full">
+              <LocaleToggle locale={locale as Locale} label={tc("switchTo")} />
+            </span>
+          </div>
+
+          <div className="st-fade relative z-10 mt-auto px-5 pt-16">
+            <header>
+              <h1 className="font-serif text-[2.35rem] leading-[1.08] text-balance">{event.hostNames}</h1>
+              <p className="mt-3 text-muted">
+                {types(event.type)}
+                {event.venueName ? ` · ${event.venueName}` : ""}
+              </p>
+              <p className="mt-1 text-sm text-muted">{formatEventDate(event.startsAt, locale as Locale)}</p>
+            </header>
+
+            {hasDock ? (
+              <NextIntlClientProvider messages={{ guest: messages.guest }}>
+                <GuestActions
+                  slug={slug}
+                  privacyHref={getPathname({ href: "/privacy", locale: locale as Locale })}
+                  needsPin={!pinOk}
+                  initialName={guest?.displayName ?? null}
+                  galleryHref={pinOk ? galleryHref : null}
+                  features={{
+                    video: ENABLED_KINDS.includes("VIDEO") && event.plan.videoAllowed,
+                    voice: ENABLED_KINDS.includes("VOICE"),
+                    maxVideoSeconds: event.plan.maxVideoSeconds ?? 60,
+                  }}
+                  shots={stats.shots}
+                />
+              </NextIntlClientProvider>
+            ) : null}
+          </div>
+        </section>
+
+        <div className="px-5 pt-4 text-center">
+          {event.welcomeText && pinOk ? <p className="leading-relaxed text-pretty text-muted">{event.welcomeText}</p> : null}
           {event.plan.includesGallery && pinOk ? (
-            <p className="sk-rule mt-6 w-full text-sm tracking-wide tabular-nums">
-              <span>{t("counts", { photos: stats.photos, guests: stats.guests })}</span>
-            </p>
+            <p className="mt-4 text-sm tracking-wide text-muted tabular-nums">{t("counts", { photos: stats.photos, guests: stats.guests })}</p>
           ) : null}
-        </header>
-
-        {event.welcomeText && pinOk ? <p className="mt-5 text-center leading-relaxed text-pretty text-[var(--sk-ivory)]/85">{event.welcomeText}</p> : null}
-
-        {event.plan.includesGallery ? (
-          <NextIntlClientProvider messages={{ guest: messages.guest }}>
-            <GuestActions
-              slug={slug}
-              privacyHref={getPathname({ href: "/privacy", locale: locale as Locale })}
-              needsPin={!pinOk}
-              initialName={guest?.displayName ?? null}
-              galleryHref={pinOk ? galleryHref : null}
-              features={{
-                video: ENABLED_KINDS.includes("VIDEO") && event.plan.videoAllowed,
-                voice: ENABLED_KINDS.includes("VOICE"),
-                maxVideoSeconds: event.plan.maxVideoSeconds ?? 60,
-              }}
-              shots={stats.shots}
-            />
-          </NextIntlClientProvider>
-        ) : null}
-
-        <p className="mt-auto pt-10 text-center">
-          <Link href={`/${slug}/report`} className="inline-flex min-h-11 items-center text-sm text-[var(--sk-ivory)]/75 underline underline-offset-4">
-            {tr("link")}
-          </Link>
-        </p>
-      </main>
-      <SiteFooter color={IVORY} />
-      <div className="sk-band shrink-0 rotate-180" aria-hidden />
-    </div>
+          <p className="mt-6">
+            <Link href={`/${slug}/report`} className="inline-flex min-h-11 items-center text-sm text-muted underline underline-offset-4">
+              {tr("link")}
+            </Link>
+          </p>
+        </div>
+        <SiteFooter color={STORI.muted} />
+      </div>
+    </StoriRoot>
   );
 }
