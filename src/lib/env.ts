@@ -24,6 +24,8 @@ const schema = z.object({
     ),
   STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
   LOCAL_MEDIA_DIR: z.string().trim().min(1).default(".data/media"),
+  // S3-compatible storage (STORAGE_DRIVER=s3): all five are required then; storage() names any that is missing.
+  // Supabase: https://<project-ref>.storage.supabase.co/storage/v1/s3. R2: https://<account-id>.r2.cloudflarestorage.com.
   S3_ENDPOINT: optional,
   S3_REGION: optional,
   S3_BUCKET: optional,
