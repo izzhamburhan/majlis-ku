@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return { title: t("title") };
 }
 
-const SECTIONS = ["controller", "collected", "purpose", "access", "retention", "deletion", "cookies", "contact"] as const;
+const SECTIONS = ["controller", "collected", "purpose", "access", "processors", "retention", "deletion", "cookies", "contact"] as const;
 
 // Read per request so a plan edit by an admin shows at once.
 export const dynamic = "force-dynamic";

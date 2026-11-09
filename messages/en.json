@@ -722,7 +722,7 @@
     },
     "privacy": {
       "title": "Privacy Policy",
-      "updated": "Updated 21 October 2026",
+      "updated": "Updated 9 November 2026",
       "intro": "Majlis Ku is a digital guestbook and invitation card for events. This page explains what data we keep, why, and how you can have it deleted.",
       "controller": {
         "title": "Who we are",
@@ -747,6 +747,15 @@
       "access": {
         "title": "Who can see it",
         "body": "An event's hosts and co-hosts see all of that event's content and RSVPs. Other guests see the gallery only if the host opens it to guests. Majlis Ku admins can see abuse reports and event data for support and moderation. Media is served through signed links that expire within an hour. A published e-card can be seen by anyone who has its link, including host names, photos, venue and date."
+      },
+      "processors": {
+        "title": "Services that process data for us",
+        "body": "We use the providers below to run Majlis Ku, and they handle data only on our behalf. Your data is stored in Singapore, outside Malaysia.",
+        "items": [
+          "Render (hosting): runs the application and receives the requests made to it.",
+          "Supabase (database and file storage, Singapore): keeps the records and the files you upload, in a private store.",
+          "Google (host sign-in only): hosts who choose Google sign-in use Google's sign-in page, and Google tells us their verified email, name and picture. Guests never use Google."
+        ]
       },
       "retention": {
         "title": "How long we keep it",

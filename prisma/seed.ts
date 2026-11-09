@@ -2,17 +2,12 @@
 // All people and events here are invented.
 
 import { PrismaClient } from "@prisma/client";
-import { PLANS, TEMPLATES } from "./seed-data";
+import { seedReferenceData } from "./seed-reference";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  for (const plan of PLANS) {
-    await prisma.plan.upsert({ where: { code: plan.code }, update: {}, create: plan });
-  }
-  for (const template of TEMPLATES) {
-    await prisma.template.upsert({ where: { code: template.code }, update: {}, create: template });
-  }
+  const { plans, templates } = await seedReferenceData(prisma); // shared with prisma/seed-production.ts
 
   const host = await prisma.user.upsert({
     where: { email: "demo.host@majlisku.test" },
@@ -45,7 +40,7 @@ async function main() {
       },
     });
   }
-  console.log(`seed: ${PLANS.length} plans, ${TEMPLATES.length} templates, demo host, admin, demo event`);
+  console.log(`seed: ${plans} plans, ${templates} templates, demo host, admin, demo event`);
 }
 
 main()

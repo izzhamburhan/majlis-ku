@@ -26,3 +26,11 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  # Builds the production image without pushing it, so a Dockerfile or Linux package problem
+  # (sharp and ffmpeg-static on glibc, the lockfile made on Windows) shows up before Render builds it.
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t majlisku:ci .

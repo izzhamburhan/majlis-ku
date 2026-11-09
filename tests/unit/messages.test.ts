@@ -21,4 +21,13 @@ describe("messages", () => {
       expect(empty, name).toEqual([]);
     }
   });
+
+  it("/privacy names Render, Supabase, Google and Singapore as processors in both languages", () => {
+    for (const [name, messages] of Object.entries({ ms, en })) {
+      const section = messages.legal.privacy.processors;
+      const text = [section.title, section.body, ...section.items].join(" ");
+      for (const word of ["Render", "Supabase", "Google"]) expect(text, `${name} ${word}`).toContain(word);
+      expect(text, name).toMatch(name === "ms" ? /Singapura/ : /Singapore/);
+    }
+  });
 });

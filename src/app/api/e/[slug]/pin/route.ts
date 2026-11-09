@@ -18,9 +18,14 @@ export const POST = handle(async (request: Request, { params }: { params: Promis
 
   const key = `${event.id}:${deviceHash}`;
   if (!(await limiters.pinAttempt.hit(key)).ok) throw new ApiError("locked", 429);
-  // Also per IP, so clearing cookies does not give a fresh set of guesses. Never reset: one guest's success must not clear it for everyone.
-  if (!(await limiters.pinIp.hit(`${event.id}:${await clientIpHash()}`)).ok) throw new ApiError("locked", 429);
-  if (!(await verifyPin(pin, event.pinHash))) throw new ApiError("invalid_pin", 403);
+  // Also per IP, so clearing cookies does not give a fresh set of guesses. Only wrong PINs count: check first, add on a wrong one,
+  // so guests sharing one address are not locked out by correct entries. Never reset: one guest's success must not clear it for everyone.
+  const ipKey = `${event.id}:${await clientIpHash()}`;
+  if (!(await limiters.pinIp.peek(ipKey)).ok) throw new ApiError("locked", 429);
+  if (!(await verifyPin(pin, event.pinHash))) {
+    await limiters.pinIp.hit(ipKey);
+    throw new ApiError("invalid_pin", 403);
+  }
 
   await limiters.pinAttempt.reset(key);
   (await cookies()).set(pinCookieName(event.id), signPinPass(event.id, deviceHash, storageSecret()), {

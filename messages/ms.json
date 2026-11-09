@@ -722,7 +722,7 @@
     },
     "privacy": {
       "title": "Dasar Privasi",
-      "updated": "Dikemas kini 21 Oktober 2026",
+      "updated": "Dikemas kini 9 November 2026",
       "intro": "Majlis Ku ialah buku tetamu digital dan kad jemputan untuk majlis. Halaman ini menerangkan data yang kami simpan, kenapa, dan bagaimana anda boleh memadamnya.",
       "controller": {
         "title": "Siapa kami",
@@ -747,6 +747,15 @@
       "access": {
         "title": "Siapa boleh melihatnya",
         "body": "Tuan rumah dan rakan tuan rumah sesuatu majlis melihat semua kandungan dan RSVP majlis itu. Tetamu lain hanya melihat galeri jika tuan rumah membukanya kepada tetamu. Pentadbir Majlis Ku boleh melihat laporan penyalahgunaan dan data majlis untuk sokongan dan moderasi. Media dihantar melalui pautan bertandatangan yang tamat dalam masa sejam. Kad jemputan yang diterbitkan boleh dilihat oleh sesiapa yang mempunyai pautannya, termasuk nama tuan rumah, gambar, tempat dan tarikh."
+      },
+      "processors": {
+        "title": "Perkhidmatan yang memproses data untuk kami",
+        "body": "Kami menggunakan penyedia di bawah untuk menjalankan Majlis Ku, dan mereka mengendalikan data bagi pihak kami sahaja. Data anda disimpan di Singapura, di luar Malaysia.",
+        "items": [
+          "Render (pengehosan): menjalankan aplikasi dan menerima permintaan yang dibuat kepadanya.",
+          "Supabase (pangkalan data dan storan fail, Singapura): menyimpan rekod dan fail yang anda muat naik, dalam storan persendirian.",
+          "Google (log masuk tuan rumah sahaja): tuan rumah yang memilih log masuk Google menggunakan halaman log masuk Google, dan Google memberitahu kami emel yang disahkan, nama dan gambar mereka. Tetamu tidak pernah menggunakan Google."
+        ]
       },
       "retention": {
         "title": "Berapa lama kami menyimpannya",

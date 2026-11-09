@@ -18,6 +18,7 @@
     "db:start": "node scripts/db.mjs",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
+    "db:seed:prod": "tsx prisma/seed-production.ts",
     "db:studio": "prisma studio",
     "skills:sync": "node scripts/skills.mjs sync",
     "skills:check": "node scripts/skills.mjs check",
@@ -41,11 +42,13 @@
     "next-intl": "^4.14.9",
     "nodemailer": "^7.0.7",
     "pdfkit": "^0.17.2",
+    "prisma": "6.19.3",
     "qrcode": "^1.5.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "server-only": "^0.0.1",
     "sharp": "^0.34.5",
+    "tsx": "^4.20.0",
     "zod": "^4.1.0"
   },
   "devDependencies": {
@@ -62,9 +65,7 @@
     "embedded-postgres": "17.10.0-beta.17",
     "eslint": "^9.39.0",
     "eslint-config-next": "15.5.28",
-    "prisma": "6.19.3",
     "tailwindcss": "^4.1.0",
-    "tsx": "^4.20.0",
     "typescript": "5.9.3",
     "vitest": "^3.2.7"
   },

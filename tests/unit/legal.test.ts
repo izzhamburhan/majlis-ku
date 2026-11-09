@@ -14,7 +14,7 @@ describe("legal copy", () => {
   });
 
   it("has a privacy and terms section for every topic in the spec", () => {
-    const privacy = ["controller", "collected", "purpose", "access", "retention", "deletion", "cookies", "contact"];
+    const privacy = ["controller", "collected", "purpose", "access", "processors", "retention", "deletion", "cookies", "contact"];
     const terms = ["service", "hostDuties", "prohibited", "suspension", "plans", "warranty", "law", "contact"];
     for (const messages of [ms, en]) {
       expect(Object.keys(messages.legal.privacy)).toEqual(expect.arrayContaining(privacy));

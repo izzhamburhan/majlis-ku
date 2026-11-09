@@ -59,7 +59,7 @@ Always name the role when dispatching a subagent; `.claude/settings.json` makes 
 
 ## Current priorities
 
-Decided by the developer on 2026-10-20: **get the whole system working locally first.** No hosting decision and no payment gateway yet. Plans and limits are still enforced, and an admin can set an event's plan by hand; the real `PaymentProvider` (phase 6) waits until the developer asks for it. Local development needs only Node.js: the database runs through `embedded-postgres` and media is stored on the local disk behind the same storage interface that S3 or R2 will use later.
+Decided by the developer on 2026-10-20: **get the whole system working locally first.** No hosting decision and no payment gateway yet. Plans and limits are still enforced, and an admin can set an event's plan by hand; the real `PaymentProvider` (phase 6) waits until the developer asks for it. Local development needs only Node.js: the database runs through `embedded-postgres` and media is stored on the local disk behind the same storage interface that S3 or R2 uses when deployed. Hosting was chosen on 2026-11-09: Render's free web service with Supabase (PostgreSQL and Storage); see `docs/deploy-render-supabase.md`. Local development stays as it was.
 
 ## Stack
 
@@ -70,14 +70,14 @@ Do not change the stack or add a paid service without the developer's approval.
 | Framework | Next.js (App Router), TypeScript strict, Tailwind CSS, installable PWA |
 | Database | PostgreSQL with Prisma 6; locally through `embedded-postgres` (no Docker needed) |
 | Auth (hosts only) | Auth.js v5: email magic link (printed to the server log in development) and Google sign-in |
-| Media storage | `StorageDriver` interface: `local` (disk, signed upload and download URLs served by the app) now; S3-compatible (R2 or S3) with direct-from-browser presigned uploads later |
+| Media storage | `StorageDriver` interface: `local` (disk, signed upload and download URLs served by the app; the default, for development and e2e); `s3` for deployment (`STORAGE_DRIVER=s3`: Supabase Storage, R2 or AWS S3, direct-from-browser presigned uploads) |
 | Media processing | Client-side image compression; server-side thumbnails with `sharp`; capped video length and size; voice notes converted to a web-friendly format |
 | Realtime | Server-Sent Events for the live gallery and slideshow, from an in-process bus (`src/server/realtime/`); a shared bus replaces it with more than one server |
 | Video and voice | `ffmpeg-static`: H.264/AAC MP4 and poster for video, AAC `.m4a` for voice, processed in an in-process job queue; stuck jobs resume at start-up (`src/instrumentation.ts`) |
 | Payments | Deferred. Later: a Malaysian gateway (FPX, e-wallets, cards) behind a `PaymentProvider` interface, with verified webhooks |
 | Validation | Zod at every boundary |
 | Tests | Vitest for business logic, Playwright e2e for the guest upload flow and the payment flow (sandbox) |
-| Deploy | Local first. A Dockerfile and hosting come later |
+| Deploy | `Dockerfile` (Node 22, Debian slim) on Render's free web service in Singapore (`render.yaml`) with Supabase for PostgreSQL and file storage; Railway later. Setup: `docs/deploy-render-supabase.md`. Local development needs no Docker |
 
 ## Layout
 
@@ -90,7 +90,7 @@ src/server/payments/     PaymentProvider interface and one adapter per gateway (
 src/lib/                 isomorphic helpers: zod schemas, money (sen), dates (Asia/Kuala_Lumpur), i18n
 src/components/          UI; guest components kept light (no heavy client libraries)
 messages/                i18n strings: ms.json (default), en.json
-prisma/                  schema.prisma, migrations, seed.ts
+prisma/                  schema.prisma, migrations, seed.ts (local demo), seed-production.ts (plans and templates only), seed-reference.ts (shared upserts)
 tests/unit/              Vitest
 tests/e2e/               Playwright
 docs/brief.md            the product brief (source of the requirements)
@@ -100,8 +100,10 @@ docs/specs/, docs/plans/ one spec and one plan per phase or change
 playbook.md              the process: gates, git rules, validation, Definition of Done
 .claude/skills/          process and guard skills (Codex twins in .codex/skills/)
 .claude/agents/          role agents: scout, implementer, reviewer, final reviewer (Codex twins in .codex/agents/)
-scripts/                 worktree-add/cleanup, skills.mjs (sync and parity check for skills and agents), db.mjs (local Postgres)
-.github/                 CI workflow and pull request template
+scripts/                 worktree-add/cleanup, skills.mjs (sync and parity check for skills and agents), db.mjs (local Postgres), start.sh (container start: migrate, seed, serve)
+.github/                 CI workflow (checks, docker build) and pull request template
+Dockerfile, .dockerignore, render.yaml   the production image and the Render blueprint
+docs/deploy-render-supabase.md           step-by-step deployment guide (Supabase, Google, Render, checklist)
 .mcp.json                MCP servers for agents (Playwright, Prisma)
 ```
 
@@ -120,7 +122,7 @@ scripts/                 worktree-add/cleanup, skills.mjs (sync and parity check
 | 8a Local hardening: retention purge job, shared Postgres rate limiter, privacy and terms pages, security headers, `/api/health`, e2e for these | done |
 | Guest flow v2 (`docs/specs/guest-flow-v2.md`): camera-first guest page, disposable shot limit per guest (`Event.shotsPerGuest`), Photobook TV layout (one guest per spread: photobooth print or strip plus their wish) | in review |
 | Stori redesign (`docs/specs/guest-stori.md`): photo-led dusk theme on the landing page, guest page, gallery, report page, host pages and Photobook TV, replacing Songket. Colours are provisional. Visual system in `DESIGN.md` | in review |
-| 8b Deployment hardening: Dockerfile, S3/R2 `StorageDriver`, deployment guide, client IP trust behind the proxy, HSTS, PIN guessing across devices (per-IP limit) | next |
+| 8b Deployment (`docs/specs/deploy-render-supabase.md`): first step done: Docker image, S3 `StorageDriver`, deployed-mode safety (`DEPLOYED=1`: sign-in rules, client IP trust, HSTS, per-IP PIN limit), Render and Supabase guide. The first real deploy is pending the developer. Still open: shared realtime bus, CSP nonces, e2e in CI | first step done |
 
 ## Commands
 
@@ -130,6 +132,7 @@ First run: `npm install`, `cp .env.example .env` (fill `AUTH_SECRET` with `npx a
 npm run db:start             # local PostgreSQL on the DATABASE_URL port, 5433 by default (embedded-postgres); keep it running in its own terminal
 npx prisma migrate dev       # apply migrations to the local database
 npx prisma db seed           # plans, templates, demo host, admin, demo event (safe to run twice)
+npm run db:seed:prod         # plans and templates only, no demo data (what the container runs at start; safe to run twice)
 npm run dev                  # http://localhost:3000 ; the demo guest page is /demo-aisyah-daniel
 npm run lint
 npm run typecheck            # tsc --noEmit
@@ -146,6 +149,8 @@ Try it on a phone on the same Wi-Fi: set `NEXT_PUBLIC_APP_URL` and `AUTH_URL` in
 
 `GET /api/health` returns 200 `{ "status": "ok" }` when the database answers, 503 otherwise.
 
+`STORAGE_DRIVER=s3` and `DEPLOYED=1` are for deployment only (set by `render.yaml`); leave them unset locally, in CI and in e2e, which run the `local` driver over http. With `DEPLOYED=1` the server refuses to start unless the configuration is safe. The image is built with `docker build -t majlisku .` (there is a CI job for it); the container runs `scripts/start.sh`: `prisma migrate deploy`, the production seed, then `next start`.
+
 `NEXT_PUBLIC_APP_URL` is read at runtime through `env()` (QR codes, share links, `metadataBase`); never read `process.env.NEXT_PUBLIC_*` directly in server code, because Next.js freezes it at build time.
 
 Gotchas: do not run `next dev` and `next build` at the same time (they share `.next/`); stop old `next start` processes before e2e, or Playwright reuses a stale server (one started without `CRON_SECRET` makes the cron e2e fail with 404). If an installed PostgreSQL already uses port 5432, that is fine: the embedded one uses 5433. If something else holds 5433 (for example another project's Docker container), change the port in `DATABASE_URL` in your `.env` (for example 5434); `db:start` reads it from there. The local database must be UTF8 (emoji in wishes fail otherwise); `db:start` creates it that way and warns if an older one is not, in which case stop it, delete `.data/postgres`, and run `db:start`, `prisma migrate dev` and `prisma db seed` again.
@@ -157,7 +162,7 @@ Gotchas: do not run `next dev` and `next build` at the same time (they share `.n
 3. **Domain logic lives in `src/server/<domain>/`** as plain, unit-tested functions. Route handlers and server actions only parse input, check auth, call the domain function, and shape the response.
 4. **Guests have no account.** A guest is a display name plus a device token in a cookie, scoped to one event. Never ask a guest for an email, phone number, or login to upload.
 5. **Private by default.** Galleries are private unless the host makes them public. Media is served through short-lived signed URLs. An optional event PIN gates guest access.
-6. **Uploads go straight to object storage** with presigned URLs. The server issues the URL only after checking plan limits, size, and declared type, then confirms the object (magic bytes, size) before it becomes visible.
+6. **Uploads go straight to object storage** with presigned URLs, for the `incoming` key only. The server issues the URL only after checking plan limits, size, and declared type; on complete it verifies the `incoming` object (actual size, magic bytes), copies it to `original`, then deletes `incoming`, so a signed URL can no longer change a verified file. A sweep fails uploads still pending after an hour.
 7. **Money is integer sen** (`priceSen`, `amountSen`), currency `MYR`. Never use floats for money.
 8. **Payments go through `PaymentProvider`.** Webhooks verify the signature, are idempotent, and are the only thing that marks a payment paid.
 9. **Time is stored in UTC** and shown in `Asia/Kuala_Lumpur`.
@@ -170,6 +175,7 @@ Gotchas: do not run `next dev` and `next build` at the same time (they share `.n
 - Consent text on the guest upload screen; the upload button stays disabled until it is shown.
 - The host can delete the whole event and all its media.
 - Purge: when an event's retention ends (`Event.purgeAt`: plan retention counted from the event date, or from creation, the last date change or a plan change if later), the event is archived: its files and guest records (uploads, wishes, RSVPs, guests, abuse reports, e-card) are deleted and the event row is kept as `ARCHIVED`, read-only. It runs hourly inside the server (`src/server/retention/`) and on `POST /api/cron/purge` with `Authorization: Bearer <CRON_SECRET>` (404 when `CRON_SECRET` is unset). A host edit moves `purgeAt` only when the event date changes.
+- Processors when deployed: Render (hosting) and Supabase (database and files, Singapore) and Google (host sign-in), named on `/privacy` in both languages.
 - No raw IP addresses stored; rate-limit keys use a salted hash. Rate limits live in the `RateLimit` table, so every server shares them.
 - `src/lib/legal.ts` holds placeholders (`[NAMA SYARIKAT]`, `[EMEL]`, `[ALAMAT]`) shown on `/privacy` and `/terms`. Fill them and have a lawyer review both pages before launch.
 - Seed and test data are invented. No real guests' names, phone numbers, or photos in the repo.

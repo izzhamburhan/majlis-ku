@@ -1,6 +1,6 @@
 # Handoff: where to continue
 
-Last updated: 2026-10-22. Read `CLAUDE.md` (or `AGENTS.md`) and `playbook.md` first, then start with the `majlis-workflow` skill.
+Last updated: 2026-11-09. Read `CLAUDE.md` (or `AGENTS.md`) and `playbook.md` first, then start with the `majlis-workflow` skill.
 
 ## State
 
@@ -38,7 +38,7 @@ Change A notes:
 | 6 Payments and plans | deferred by the developer (no gateway yet) |
 | 7 Admin panel | done |
 | 8a Local hardening (purge, shared rate limiter, privacy and terms, headers, health) | done |
-| 8b Deployment hardening | **next** |
+| 8b Deployment (Render and Supabase) | first step done on `feat/infra-render-supabase`; first real deploy pending the developer |
 
 ## Run it locally
 
@@ -55,7 +55,7 @@ Sign in: any email on `/signin`; the magic link is printed in the server log and
 
 ## What to build next
 
-1. **Phase 8b: deployment hardening.** Needs the hosting choice first. Dockerfile and deployment guide; S3/R2 `StorageDriver`; how the client IP is derived behind the proxy (`x-forwarded-for` trust: `guestJoin` and `report` limits are keyed by IP and can be dodged by a client that sends its own header); HSTS; **PIN guessing across devices** (the PIN limit is 5 tries per device, so clearing cookies resets it; add a per-IP limit once IP trust is decided, not a per-event cap, which would lock real guests out at the venue). Also open: a shared realtime bus for more than one server, e2e in CI, a full Content-Security-Policy with nonces.
+1. **Phase 8b: deploy for real.** Done on `feat/infra-render-supabase` (spec `docs/specs/deploy-render-supabase.md`): the `Dockerfile` and `scripts/start.sh`, the S3 `StorageDriver` with uploads that land in `incoming` and are copied to `original` after verification, deployed-mode safety (`DEPLOYED=1`: Google-only sign-in, start-up checks, client IP from `TRUSTED_PROXY_HOPS`, HSTS, a per-IP PIN limit that counts wrong PINs only), `render.yaml`, the production seed (`npm run db:seed:prod`), a CI `docker-build` job, and the guide `docs/deploy-render-supabase.md`. **Not done: the first real deploy.** The developer follows the guide and its checklist (including the browser upload to Supabase and the CORS check, which can only be proven on the real service). The Docker image has not been built on a machine with Docker yet; the CI job is the first build. Still open after that: a shared realtime bus for more than one server, a full Content-Security-Policy with nonces, e2e in CI, and the placeholders in `src/lib/legal.ts` plus a legal review before real guests.
 2. **Phase 6: Payments**, only when the developer asks. Use a `PaymentProvider` interface; read `.claude/skills/payments-guard`.
 
 ## Gotchas (learned the hard way)

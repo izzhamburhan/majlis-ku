@@ -5,13 +5,13 @@ Requirement source: `docs/brief.md`, phase 8 "Hardening: rate limits, retention 
 
 Decisions taken with the developer on 2026-10-21:
 
-1. Phase 8 is split. **8a (this spec) is local hardening**: purge job, shared rate limiter, privacy and terms pages, security headers, health route, more e2e tests. **8b** (Dockerfile, S3/R2 `StorageDriver`, deployment guide, proxy and IP trust, HSTS, PIN guessing across devices) waits until hosting is chosen.
+1. Phase 8 is split. **8a (this spec) is local hardening**: purge job, shared rate limiter, privacy and terms pages, security headers, health route, more e2e tests. **8b** (Dockerfile, S3/R2 `StorageDriver`, deployment guide, proxy and IP trust, HSTS, PIN guessing across devices) waited until hosting was chosen. **Update 2026-11-09:** hosting is chosen (Render free web service plus Supabase) and 8b's first step is done on branch `feat/infra-render-supabase`: the Docker image, the S3 `StorageDriver`, deployed-mode safety (`DEPLOYED=1`, client IP trust through `TRUSTED_PROXY_HOPS`, HSTS, a per-IP PIN limit that counts wrong PINs only) and the deployment guide. Spec: `docs/specs/deploy-render-supabase.md`; guide: `docs/deploy-render-supabase.md`. The first real deploy is pending the developer. Still open: a shared realtime bus, CSP nonces, e2e in CI.
 2. When retention ends the event is **archived, not deleted**: every file and every guest record goes; the event row stays as `ARCHIVED` so the host sees that it expired, and payment and audit rows stay valid.
 3. The legal pages name the controller, contact email and address through **clearly marked placeholders**, filled in before launch after a legal review.
 4. The rate limiter is **shared through a Postgres table**, behind the same `hit` / `reset` interface, so a later move to Redis is one file.
 5. Files written while a purge runs (a video still converting, a photo being confirmed, a host saving a cover) are caught by **re-sweeping every event archived in the last 24 hours** on each run.
 6. A host edit **moves `purgeAt` only when the event date changes** (an admin plan change still recomputes it). Fixing a typo no longer extends how long guest data is kept.
-7. Guessing an event PIN by clearing cookies (5 tries per device) **stays open until 8b**, where it is fixed with a per-IP limit once IP handling behind the proxy is decided. A per-event cap would let one person lock real guests out at the venue.
+7. Guessing an event PIN by clearing cookies (5 tries per device) **stayed open until 8b**, and is now fixed there with a per-IP limit (20 wrong PINs per 10 minutes per event and address; correct PINs do not count) now that IP handling behind the proxy is decided. A per-event cap would let one person lock real guests out at the venue.
 
 ## 1. Goal and non-goals
 
@@ -139,7 +139,7 @@ This phase is mostly privacy work.
 - `RateLimit` stores only `<name>:<key>` with hashed keys, a time and a count; rows older than a day are deleted.
 - The audit row stores counts, not content. The purge logs event ids and error names only.
 - Media a viewer already downloaded can stay in their browser cache for up to an hour (`Cache-Control: private, max-age=3600` on `/api/storage/file`), and an open venue slideshow keeps its current items until its next refresh (about 20 minutes). After that nothing is served: the files are gone.
-- Open until 8b: PIN guessing across devices and IP-keyed limits that trust `x-forwarded-for` (decision 7, non-goals).
+- Was open until 8b, closed there: PIN guessing across devices and IP-keyed limits that trust `x-forwarded-for` (decision 7, non-goals). When deployed, `TRUSTED_PROXY_HOPS` decides which `x-forwarded-for` entry counts.
 
 ## 7. Guest experience
 

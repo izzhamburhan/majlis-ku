@@ -1,0 +1,15 @@
+# Keep secrets, local data and heavy folders out of the build context.
+.env*
+node_modules
+.next
+.data
+.git
+.worktrees
+test-results
+playwright-report
+blob-report
+coverage
+*.log
+*.tsbuildinfo
+.claude
+.codex

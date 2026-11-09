@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 const calls = vi.hoisted(() => ({
   hits: [] as string[],
+  peeks: [] as string[],
   resets: [] as string[],
   blocked: new Set<string>(),
   pinOk: false,
@@ -29,6 +30,10 @@ function limiter(name: string) {
       calls.hits.push(`${name}:${key}`);
       return calls.blocked.has(name) ? { ok: false, retryAfterSec: 30 } : { ok: true, retryAfterSec: 0 };
     },
+    peek: async (key: string) => {
+      calls.peeks.push(`${name}:${key}`);
+      return calls.blocked.has(name) ? { ok: false, retryAfterSec: 30 } : { ok: true, retryAfterSec: 0 };
+    },
     reset: async (key: string) => void calls.resets.push(`${name}:${key}`),
   };
 }
@@ -48,6 +53,7 @@ const post = (pin = "1234") =>
 
 beforeEach(() => {
   calls.hits.length = 0;
+  calls.peeks.length = 0;
   calls.resets.length = 0;
   calls.blocked.clear();
   calls.cookies.length = 0;
@@ -55,9 +61,10 @@ beforeEach(() => {
 });
 
 describe("POST /api/e/[slug]/pin per-IP limit", () => {
-  it("counts every attempt against the device key and the event and IP key", async () => {
+  it("counts a wrong PIN against the device key and the event and IP key", async () => {
     const response = await post();
     expect(response.status).toBe(403);
+    expect(calls.peeks).toEqual(["pinIp:ev1:ip-hash"]);
     expect(calls.hits).toEqual(["pinAttempt:ev1:device-hash", "pinIp:ev1:ip-hash"]);
   });
 
@@ -80,6 +87,7 @@ describe("POST /api/e/[slug]/pin per-IP limit", () => {
     const response = await post("2468");
     expect(response.status).toBe(204);
     expect(calls.resets).toEqual(["pinAttempt:ev1:device-hash"]);
+    expect(calls.hits).toEqual(["pinAttempt:ev1:device-hash"]); // a correct PIN adds nothing to the IP count
     expect(calls.cookies).toEqual(["mk_pin_ev1"]);
   });
 });
