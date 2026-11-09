@@ -103,7 +103,8 @@
     "devHelp": "Tiada e-mel diperlukan. Pilihan ini tidak wujud di laman sebenar.",
     "devAsHost": "Masuk sebagai tuan rumah demo",
     "devAsAdmin": "Masuk sebagai admin",
-    "error": "Log masuk gagal. Sila cuba lagi."
+    "error": "Log masuk gagal. Sila cuba lagi.",
+    "noMethods": "Log masuk tidak tersedia buat masa ini. Sila hubungi pemilik laman."
   },
   "dashboard": {
     "title": "Majlis saya",

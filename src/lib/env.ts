@@ -9,6 +9,12 @@ const schema = z.object({
   AUTH_SECRET: z.string().trim().min(16),
   HASH_SALT: z.string().trim().min(8),
   NEXT_PUBLIC_APP_URL: z.url(),
+  // Auth.js reads AUTH_URL itself (the public https address when deployed); declared here so it is documented and checked at start-up.
+  AUTH_URL: optional,
+  // "1" switches on the production-only start-up checks and sign-in rules (src/lib/deployed.ts). Never keyed on NODE_ENV.
+  DEPLOYED: z.enum(["0", "1"]).optional(),
+  // How many proxies sit in front of the app; the client IP is the x-forwarded-for entry that many from the right. Required when DEPLOYED=1.
+  TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).optional(),
   AUTH_GOOGLE_ID: optional,
   AUTH_GOOGLE_SECRET: optional,
   EMAIL_SERVER: optional,

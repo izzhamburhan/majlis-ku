@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { ensureDeviceHash, findGuestEvent } from "@/server/guests/context";
 import { pinCookieName, signPinPass, verifyPin } from "@/server/guests/pin";
-import { ApiError, handle, readJson } from "@/server/http";
+import { ApiError, clientIpHash, handle, readJson } from "@/server/http";
 import { storageSecret } from "@/server/media/storage";
 import { limiters } from "@/server/security/rate-limit";
 
@@ -18,6 +18,8 @@ export const POST = handle(async (request: Request, { params }: { params: Promis
 
   const key = `${event.id}:${deviceHash}`;
   if (!(await limiters.pinAttempt.hit(key)).ok) throw new ApiError("locked", 429);
+  // Also per IP, so clearing cookies does not give a fresh set of guesses. Never reset: one guest's success must not clear it for everyone.
+  if (!(await limiters.pinIp.hit(`${event.id}:${await clientIpHash()}`)).ok) throw new ApiError("locked", 429);
   if (!(await verifyPin(pin, event.pinHash))) throw new ApiError("invalid_pin", 403);
 
   await limiters.pinAttempt.reset(key);

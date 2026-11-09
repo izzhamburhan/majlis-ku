@@ -1,5 +1,10 @@
+import { enforceDeployedConfig } from "./lib/deployed";
 import { startPurgeSchedule } from "./server/retention/schedule";
 import { resumeProcessing } from "./server/uploads/processing";
+
+// With DEPLOYED=1, refuse to start on an unsafe configuration (names and reasons only, never values). Runs at server
+// start, not at build, and does nothing unless DEPLOYED=1.
+enforceDeployedConfig(process.env);
 
 // Pick up uploads that were still processing when the server last stopped.
 try {

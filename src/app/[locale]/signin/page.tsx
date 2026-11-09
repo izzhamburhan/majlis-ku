@@ -6,13 +6,22 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { getPathname, redirect } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
-import { createDevSession, DEV_SESSION_COOKIE, devLoginAllowed } from "@/server/auth/dev-login";
+import { isDeployed } from "@/lib/deployed";
+import { env } from "@/lib/env";
+import { createDevSession, DEV_SESSION_COOKIE } from "@/server/auth/dev-login";
+import { signInMethods } from "@/server/auth/sign-in-options";
 
 const emailSchema = z.object({ email: z.email().max(254), locale: z.enum(["ms", "en"]) });
+
+function methods() {
+  return signInMethods({ deployed: isDeployed(), emailServer: env().EMAIL_SERVER, google: googleEnabled, nodeEnv: process.env.NODE_ENV });
+}
 
 async function signInWithEmail(formData: FormData) {
   "use server";
   const { email, locale } = emailSchema.parse({ email: formData.get("email"), locale: formData.get("locale") });
+  // Deployed without a mail server the email provider is not registered; do not even try.
+  if (!methods().email) redirect({ href: "/signin?error=1", locale });
   await signIn("email", {
     email: email.toLowerCase(),
     redirect: false,
@@ -48,7 +57,7 @@ export default async function SignInPage({
   const { error } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("auth");
-  const dev = devLoginAllowed(process.env.NODE_ENV, process.env.EMAIL_SERVER);
+  const { email: emailEnabled, dev, none } = methods();
   return (
     <>
       <SiteHeader />
@@ -60,6 +69,7 @@ export default async function SignInPage({
             {t("error")}
           </p>
         ) : null}
+        {emailEnabled ? (
         <form action={signInWithEmail} className="mt-6 space-y-3">
           <input type="hidden" name="locale" value={locale as Locale} />
           <label className="block">
@@ -77,6 +87,12 @@ export default async function SignInPage({
             {t("sendLink")}
           </button>
         </form>
+        ) : null}
+        {none ? (
+          <p role="status" className="mt-6 rounded-lg bg-ink/5 p-3 text-ink/80">
+            {t("noMethods")}
+          </p>
+        ) : null}
         {dev ? <p className="mt-3 text-sm text-ink/60">{t("devHint")}</p> : null}
         {dev ? (
           <section className="mt-6 rounded-xl border border-dashed border-ink/30 p-4" aria-labelledby="dev-login">
@@ -102,7 +118,7 @@ export default async function SignInPage({
         ) : null}
         {googleEnabled ? (
           <>
-            <p className="my-5 text-center text-sm text-ink/60">{t("or")}</p>
+            {emailEnabled ? <p className="my-5 text-center text-sm text-ink/60">{t("or")}</p> : <div className="mt-6" />}
             <form action={signInWithGoogle}>
               <input type="hidden" name="locale" value={locale} />
               <button type="submit" className="min-h-12 w-full rounded-full border border-ink/20 bg-white font-medium">

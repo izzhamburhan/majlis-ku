@@ -54,8 +54,11 @@ export class LocalStorageDriver implements StorageDriver {
     try {
       const info = await stat(this.pathFor(key));
       return info.isFile() ? { size: info.size } : null;
-    } catch {
-      return null;
+    } catch (error) {
+      // Only "nothing there" means missing; a permission or disk error must not look like an absent object.
+      const code = (error as { code?: string } | null)?.code;
+      if (code === "ENOENT" || code === "ENOTDIR") return null;
+      throw error;
     }
   }
 

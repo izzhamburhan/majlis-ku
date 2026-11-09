@@ -44,6 +44,23 @@ describe("LocalStorageDriver.deletePrefix errors", () => {
   });
 });
 
+describe("LocalStorageDriver.stat errors", () => {
+  it("returns null for a missing object, a missing folder and a path through a file (ENOENT, ENOTDIR)", async () => {
+    await storage.putObject("events/e12/file", Buffer.from("x"), "text/plain");
+    expect(await storage.stat("events/e12/nothing")).toBeNull();
+    expect(await storage.stat("events/never/was/here")).toBeNull();
+    expect(await storage.stat("events/e12/file/below")).toBeNull();
+    expect(await storage.stat("events/e12")).toBeNull(); // a folder is not an object
+  });
+
+  it("rethrows any other error instead of reporting the object as missing", async () => {
+    await storage.putObject("events/e13/file", Buffer.from("x"), "text/plain");
+    fsSpy.stat.mockRejectedValueOnce(Object.assign(new Error("permission denied"), { code: "EACCES" }));
+    await expect(storage.stat("events/e13/file")).rejects.toMatchObject({ code: "EACCES" });
+    expect(await storage.stat("events/e13/file")).toEqual({ size: 1 });
+  });
+});
+
 describe("LocalStorageDriver copy temp names", () => {
   it("two copies in the same millisecond do not share a temporary file", async () => {
     await storage.putObject("events/e11/src", Buffer.from("same"), "text/plain");

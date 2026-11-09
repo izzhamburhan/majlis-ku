@@ -36,6 +36,9 @@ export const limiters = {
   wish: createRateLimiter({ name: "wish", limit: 20, windowMs: 10 * MINUTE }),
   guestJoin: createRateLimiter({ name: "guestJoin", limit: 30, windowMs: 10 * MINUTE }),
   pinAttempt: createRateLimiter({ name: "pinAttempt", limit: 5, windowMs: 10 * MINUTE }),
+  // Per event and salted IP hash, on top of pinAttempt: clearing cookies gives a new device but not a new address.
+  // 20 leaves room for a venue's shared Wi-Fi or carrier NAT.
+  pinIp: createRateLimiter({ name: "pinIp", limit: 20, windowMs: 10 * MINUTE }),
   rsvp: createRateLimiter({ name: "rsvp", limit: 10, windowMs: 10 * MINUTE }),
   report: createRateLimiter({ name: "report", limit: 5, windowMs: 10 * MINUTE }),
 };

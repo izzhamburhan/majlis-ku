@@ -103,7 +103,8 @@
     "devHelp": "No email needed. This option does not exist on the live site.",
     "devAsHost": "Sign in as the demo host",
     "devAsAdmin": "Sign in as admin",
-    "error": "Sign-in failed. Please try again."
+    "error": "Sign-in failed. Please try again.",
+    "noMethods": "Sign-in is not available right now. Please contact the site owner."
   },
   "dashboard": {
     "title": "My events",

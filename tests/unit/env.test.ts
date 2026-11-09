@@ -38,6 +38,20 @@ describe("parseEnv", () => {
     expect(parseEnv({ ...minimal, CRON_SECRET: "" }).CRON_SECRET).toBeUndefined();
   });
 
+  it("DEPLOYED, AUTH_URL and TRUSTED_PROXY_HOPS are optional and checked when set", () => {
+    const base = parseEnv(minimal);
+    expect(base.DEPLOYED).toBeUndefined();
+    expect(base.AUTH_URL).toBeUndefined();
+    expect(base.TRUSTED_PROXY_HOPS).toBeUndefined();
+    expect(parseEnv({ ...minimal, DEPLOYED: "", TRUSTED_PROXY_HOPS: "", AUTH_URL: "" }).TRUSTED_PROXY_HOPS).toBeUndefined();
+    const set = parseEnv({ ...minimal, DEPLOYED: "1", TRUSTED_PROXY_HOPS: "2", AUTH_URL: "https://majlisku.example.com" });
+    expect(set).toMatchObject({ DEPLOYED: "1", TRUSTED_PROXY_HOPS: 2, AUTH_URL: "https://majlisku.example.com" });
+    expect(parseEnv({ ...minimal, TRUSTED_PROXY_HOPS: "0" }).TRUSTED_PROXY_HOPS).toBe(0);
+    for (const bad of ["-1", "1.5", "two"]) expect(() => parseEnv({ ...minimal, TRUSTED_PROXY_HOPS: bad }), bad).toThrow(/TRUSTED_PROXY_HOPS/);
+    // "true" would silently leave deployed mode off, so it is refused instead.
+    expect(() => parseEnv({ ...minimal, DEPLOYED: "true" })).toThrow(/DEPLOYED/);
+  });
+
   it("S3_MAX_OBJECT_BYTES is an optional positive whole number", () => {
     expect(parseEnv(minimal).S3_MAX_OBJECT_BYTES).toBeUndefined();
     expect(parseEnv({ ...minimal, S3_MAX_OBJECT_BYTES: "" }).S3_MAX_OBJECT_BYTES).toBeUndefined();

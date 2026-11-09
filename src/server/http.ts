@@ -48,9 +48,25 @@ export function handle<A extends unknown[]>(fn: (...args: A) => Promise<Response
   };
 }
 
+/**
+ * The caller's address from the proxy headers; never an empty string.
+ * `hops` unset: the first x-forwarded-for entry (a client can forge it, so deployed mode requires `hops`).
+ * `hops` set: the entry that many from the right (1 is the last, the address the nearest proxy saw), which a client
+ * cannot forge as long as `hops` matches the real number of proxies. Too few entries falls back to x-real-ip, then "local".
+ */
+export function clientIp(headers: Pick<Headers, "get">, hops?: number): string {
+  const forwarded = headers.get("x-forwarded-for");
+  const chosen =
+    hops === undefined
+      ? forwarded?.split(",")[0]?.trim()
+      : hops >= 1
+        ? forwarded?.split(",").at(-hops)?.trim()
+        : undefined;
+  return chosen || headers.get("x-real-ip")?.trim() || "local";
+}
+
 /** Salted hash of the caller's IP, for rate limits. Never store or log the raw address. */
 export async function clientIpHash(): Promise<string> {
-  const h = await headers();
-  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "local";
-  return hashIp(ip, env().HASH_SALT);
+  const { HASH_SALT, TRUSTED_PROXY_HOPS } = env();
+  return hashIp(clientIp(await headers(), TRUSTED_PROXY_HOPS), HASH_SALT);
 }

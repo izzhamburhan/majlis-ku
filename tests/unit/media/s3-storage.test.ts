@@ -1,11 +1,27 @@
+import { randomBytes } from "node:crypto";
+import { EventEmitter } from "node:events";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Readable } from "node:stream";
 import type { S3Client } from "@aws-sdk/client-s3";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi, type MockInstance } from "vitest";
 import { S3StorageDriver, type S3StorageConfig } from "@/server/media/s3-storage";
 import { storageDriverContract } from "./storage-contract";
+
+// Every file handle the driver opens is recorded, with its close() spied on; the real fs does the work.
+const fsSpy = vi.hoisted(() => ({ handles: [] as { close: MockInstance<() => Promise<void>> }[] }));
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs/promises")>();
+  return {
+    ...actual,
+    open: async (...args: Parameters<typeof actual.open>) => {
+      const handle = await actual.open(...args);
+      fsSpy.handles.push({ close: vi.spyOn(handle, "close") });
+      return handle;
+    },
+  };
+});
 
 /*
  * The shared driver suite runs against a real bucket only when ALL of these are set, and is skipped (and reported
@@ -84,6 +100,25 @@ describe("S3StorageDriver presigned URLs (offline)", () => {
     expect(query.get("X-Amz-Expires")).toBe("3600");
     expect(query.get("response-content-disposition")).toMatch(/^attachment;.*filename/);
     expect(query.get("response-content-disposition")).toContain("kenduri photo.jpg");
+  });
+
+  it("a hostile filename leaves no CR, LF or quote inside the response-content-disposition value", async () => {
+    const hostile = 'evil"; filename="x.exe\r\nSet-Cookie: a=b\nX: é "quoted" \\ kenduri‮.jpg';
+    const url = await driver.getDownloadUrl("events/e1/u1/original", { expiresInSec: 600, filename: hostile });
+    const disposition = params(url).query.get("response-content-disposition") ?? "";
+    expect(disposition).not.toMatch(/[\r\n]/);
+    // The only quotes left are the pair around the ASCII fallback name.
+    expect(disposition.match(/"/g)).toHaveLength(2);
+    expect(disposition).toMatch(/^attachment; filename="[\x20-\x7e]*"; filename\*=UTF-8''[A-Za-z0-9%._~-]*$/);
+    expect(decodeURIComponent(disposition.split("filename*=UTF-8''")[1]!)).toBe(hostile);
+  });
+
+  it("percent-encodes ' ( ) * ! in the UTF-8 filename, which encodeURIComponent leaves as they are", async () => {
+    const url = await driver.getDownloadUrl("events/e1/u1/original", { expiresInSec: 600, filename: "it's (a) *big* day!.jpg" });
+    const disposition = params(url).query.get("response-content-disposition") ?? "";
+    const encoded = disposition.split("filename*=UTF-8''")[1]!;
+    expect(encoded).not.toMatch(/['()*!]/);
+    expect(encoded).toBe("it%27s%20%28a%29%20%2Abig%2A%20day%21.jpg");
   });
 
   it("presigned GET without a filename sets no content disposition", async () => {
@@ -172,6 +207,57 @@ describe("S3StorageDriver calls the client with the right input", () => {
     const target = join(scratch, "deep", "downloaded");
     await driver.downloadToFile("events/e1/u1/original", target);
     expect((await readFile(target)).toString()).toBe("file");
+  });
+
+  it("readHead never returns more than the bytes asked for, even if the store sends more", async () => {
+    const { client } = fakeClient([{ Body: { transformToByteArray: async () => new Uint8Array([1, 2, 3, 4, 5, 6]) } }]);
+    expect(await new S3StorageDriver(CONFIG, client).readHead("events/e1/u1/original", 4)).toEqual(Buffer.from([1, 2, 3, 4]));
+  });
+
+  it("getObjectStream accepts any stream with pipe(), not only this realm's Readable, and refuses other bodies", async () => {
+    const foreign = Object.assign(new EventEmitter(), { pipe: () => undefined });
+    const { client } = fakeClient([{ Body: foreign }, { Body: { transformToByteArray: async () => new Uint8Array() } }, {}]);
+    const driver = new S3StorageDriver(CONFIG, client);
+    expect(await driver.getObjectStream("events/e1/u1/original")).toBe(foreign);
+    await expect(driver.getObjectStream("events/e1/u1/original")).rejects.toThrow(/not a Node stream/);
+    await expect(driver.getObjectStream("events/e1/u1/original")).rejects.toThrow(/not a Node stream/);
+  });
+
+  it("putObjectFromFile sends exactly the file's bytes (across read chunks) and closes the file handle", async () => {
+    const bytes = randomBytes(2.5 * 1024 * 1024);
+    const file = join(scratch, "big.bin");
+    await writeFile(file, bytes);
+    let received = Buffer.alloc(0);
+    let handleOpenAtSend = false;
+    const client = {
+      send: async (command: { input: { Body: Readable } }) => {
+        const chunks: Buffer[] = [];
+        for await (const chunk of command.input.Body) chunks.push(Buffer.from(chunk as Uint8Array));
+        received = Buffer.concat(chunks);
+        handleOpenAtSend = fsSpy.handles.length > 0 && fsSpy.handles.every((handle) => handle.close.mock.calls.length === 0);
+        return {};
+      },
+    } as unknown as S3Client;
+    fsSpy.handles.length = 0;
+
+    await new S3StorageDriver(CONFIG, client).putObjectFromFile("events/e1/u1/display.mp4", file, "video/mp4");
+
+    expect(received.equals(bytes)).toBe(true);
+    expect(handleOpenAtSend).toBe(true);
+    expect(fsSpy.handles).toHaveLength(1);
+    expect(fsSpy.handles[0]!.close).toHaveBeenCalledTimes(1);
+  });
+
+  it("putObjectFromFile closes the file handle when the upload fails", async () => {
+    const file = join(scratch, "small.bin");
+    await writeFile(file, Buffer.from("abc"));
+    fsSpy.handles.length = 0;
+    const { client } = fakeClient([new Error("network down")]);
+
+    await expect(new S3StorageDriver(CONFIG, client).putObjectFromFile("events/e1/u1/x", file, "video/mp4")).rejects.toThrow("network down");
+
+    expect(fsSpy.handles).toHaveLength(1);
+    expect(fsSpy.handles[0]!.close).toHaveBeenCalledTimes(1);
   });
 
   it("putObject sends the body and content type", async () => {

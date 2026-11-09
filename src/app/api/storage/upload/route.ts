@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { mkdir, rename, rm } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
 import { dirname } from "node:path";
@@ -27,7 +28,7 @@ export async function PUT(request: Request) {
   if (!request.body) return apiError("empty", 400);
 
   const target = store.pathFor(verified.key);
-  const temp = `${target}.part-${process.pid}-${Date.now()}`;
+  const temp = `${target}.part-${process.pid}-${Date.now()}-${randomUUID()}`;
   await mkdir(dirname(target), { recursive: true });
 
   let received = 0;

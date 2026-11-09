@@ -30,7 +30,9 @@ const DELETE_BATCH = 1000;
 /** `attachment` header with an ASCII fallback and the UTF-8 name, so a Malay or emoji filename survives. */
 function attachmentDisposition(filename: string): string {
   const fallback = filename.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
-  return `attachment; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+  // encodeURIComponent leaves ' ( ) * ! as they are, but RFC 5987 does not allow them in an ext-value.
+  const encoded = encodeURIComponent(filename).replace(/['()*!]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
+  return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`;
 }
 
 /** The file in 1 MB pieces. Plain reads, so no whole-file buffer and no experimental Node API. */
@@ -118,7 +120,8 @@ export class S3StorageDriver implements StorageDriver {
   async readHead(key: string, bytes: number): Promise<Buffer> {
     if (bytes <= 0) return Buffer.alloc(0);
     const response = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key, Range: `bytes=0-${bytes - 1}` }));
-    return Buffer.from(await this.bodyOf(response.Body).transformToByteArray());
+    // A store that ignores the Range header sends the whole object; never hand back more than was asked for.
+    return Buffer.from(await this.bodyOf(response.Body).transformToByteArray()).subarray(0, bytes);
   }
 
   async getObject(key: string): Promise<Buffer> {
@@ -128,8 +131,9 @@ export class S3StorageDriver implements StorageDriver {
 
   async getObjectStream(key: string): Promise<Readable> {
     const response = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
-    const body: unknown = response.Body;
-    if (body instanceof Readable) return body;
+    // Duck-typed: instanceof Readable fails for a stream made by another copy of Node's stream module.
+    const body = response.Body as { pipe?: unknown } | undefined;
+    if (body && typeof body.pipe === "function") return body as Readable;
     throw new Error("S3 returned a body that is not a Node stream");
   }
 
@@ -150,7 +154,8 @@ export class S3StorageDriver implements StorageDriver {
     const { size } = await statFile(path);
     const file = await open(path, "r");
     try {
-      // A known length lets the SDK stream the file instead of buffering it.
+      // A known length lets the SDK stream the file instead of buffering it. The SDK cannot hash a streamed
+      // body, so it sends it with an unsigned payload, which it does only over https: S3_ENDPOINT must be an https URL.
       await this.client.send(
         new PutObjectCommand({
           Bucket: this.bucket,

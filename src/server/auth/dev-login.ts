@@ -1,5 +1,6 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
+import { isDeployed } from "@/lib/deployed";
 import { env } from "@/lib/env";
 import { db } from "@/server/db";
 import { isAdminEmail } from "./roles";
@@ -9,9 +10,9 @@ import { isAdminEmail } from "./roles";
 export const DEV_SESSION_COOKIE = "authjs.session-token";
 const SESSION_DAYS = 30;
 
-/** Only on a developer's machine: never in production, and off once real email is configured. */
-export function devLoginAllowed(nodeEnv: string | undefined, emailServer: string | undefined): boolean {
-  return nodeEnv !== "production" && !emailServer;
+/** Only on a developer's machine: never in production or deployed mode, and off once real email is configured. */
+export function devLoginAllowed(nodeEnv: string | undefined, emailServer: string | undefined, deployed = isDeployed()): boolean {
+  return nodeEnv !== "production" && !deployed && !emailServer;
 }
 
 export async function createDevSession(email: string): Promise<{ sessionToken: string; expires: Date }> {
