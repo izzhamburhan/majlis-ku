@@ -28,7 +28,7 @@ Scan convention: a line that must keep a literal light colour (a template previe
 | onInk | `#251D2A` | `--color-on-ink` |
 | danger | `#FFB4A8` | `--color-danger` |
 
-`@theme` defaults, so pages outside `.stori` do not change: `--color-surface: #ffffff`, `--color-muted: #5d5247`, `--color-on-brand: #ffffff`, `--color-on-ink: #ffffff`, `--color-danger: #b91c1c`.
+`@theme` defaults, so pages outside `.stori` do not change: `--color-surface: #ffffff`, `--color-muted: #696159`, `--color-on-brand: #ffffff`, `--color-on-ink: #ffffff`, `--color-danger: #b91c1c`.
 
 `StoriRoot` (`src/components/stori-root.tsx`, a Server Component) renders the inline `<style>` that sets the `html, body` background to ground, and a wrapper with class `stori`, `data-stori` and `storiVars()`.
 

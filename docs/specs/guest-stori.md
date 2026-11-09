@@ -1,6 +1,6 @@
 # Stori redesign
 
-Status: draft for developer approval, 2026-11-08. Revised after the final reviewer's spec review.
+Status: approved by the developer, 2026-11-09.
 Branch: `feat/guest-stori`, stacked on `feat/guest-flow-v2` at `311719d`.
 Design source: the "C. Stori" boards on the design canvas, in the dusk colours the developer saw before the later colour rounds (`#251D2A` ground, `#F2D6C4` peach). The developer will revisit colours and touch-ups in a later change, so every colour lives in one place.
 
@@ -37,7 +37,7 @@ Guest page (`/{slug}`)
 12. The shutter's accessible name is "Ambil gambar", and "Filem anda sudah habis" at zero shots, when it is disabled. A visible paragraph shows the same state above the dock.
 13. "Hai, {name}!" and the change-name control are visible in the menu state.
 14. Consent stays inline, not a modal, with one checkbox labelled "Saya faham dan bersetuju" in both states. Before agreeing: a panel above the dock with the existing text, privacy link and checkbox, with no dismiss control. After agreeing: one quiet line with the checked checkbox and privacy link, so the choice can be undone. Shutter, gallery picker and sheets stay disabled until agreed. A new e2e test asserts this.
-15. PIN, name, video, voice, wish and thanks remain the existing views, styled as dusk sheets in normal page flow over the lower hero. They are not `<dialog>` or `inert`, the `h1` stays in the accessibility tree, and the no-JS name form still works. The dock renders only in the menu state, as the three-item grid does today.
+15. PIN, name, video, voice, wish and thanks remain the existing views, styled as dusk sheets in normal page flow over the lower hero. They are not `<dialog>` or `inert`, the `h1` stays in the accessibility tree. The dock renders only in the menu state, as the three-item grid does today.
 16. When the plan disallows video, the Video item is disabled with the existing premium-only note. Voice is disabled when `features.voice` is false, as today.
 17. The shot counter and the gallery picker (`photo-input`) are visible above the dock, as a counter chip and a labelled text button.
 18. In the menu state, while uploads are queued, the "Gambar saya" strip with progress and retry is visible above the dock.

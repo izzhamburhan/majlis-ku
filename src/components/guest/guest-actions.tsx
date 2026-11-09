@@ -146,7 +146,7 @@ export function GuestActions({
 
   function agree(value: boolean) {
     setConsent(value);
-    if (value) storageSet(CONSENT_KEY, "1");
+    storageSet(CONSENT_KEY, value ? "1" : "0");
   }
 
   function update(id: number, patch: Partial<QueueItem>) {

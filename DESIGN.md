@@ -23,6 +23,7 @@ Inside `.stori`, use the tokens, never `bg-white`, `text-white` or palette colou
 | `muted` | `#D6CADB` | secondary text |
 | `brand` | `#F2D6C4` | peach: primary action, shutter, Photobook wish card |
 | `brandDark` | `#E3BFA8` | primary action, hover |
+| `onBrand`, `onInk` | `#251D2A` | text on peach and on white |
 | `danger` | `#FFB4A8` | errors, delete |
 | `success` | `#A8E0B8` | confirmations |
 
@@ -43,7 +44,7 @@ All are self-hosted through `next/font`: no request to Google from guest pages.
 - **Hero**: the cover fills the first viewport, server-rendered so plans without the gallery keep it. A scrim holds text at 4.5:1 over any photo. With no cover, or before the PIN, it shows the monogram on dusk.
 - **Dock**: fixed pill at the bottom: Galeri, Video, raised shutter, Suara, Ucapan. Menu state only.
 - **Consent**: an inline panel above the dock with no dismiss control, then one quiet line that can undo it. Never a modal.
-- **Sheets**: PIN, name, video, voice, wish and thanks are dusk panels in normal page flow. No `<dialog>`, no `inert`: the name form works without JavaScript.
+- **Sheets**: PIN, name, video, voice, wish and thanks are dusk panels in normal page flow. No `<dialog>`, no `inert`: the names heading stays in the accessibility tree.
 - **Glass** (`.st-glass`): translucent dusk with blur; solid dusk where `backdrop-filter` or `color-mix` is missing.
 - **Photobook spread**: open album on dusk with dusk pages and a peach wish card. Spreads, the three mounts (gilded frame, taped polaroid, photobooth strip), page numbers and the page turn are unchanged. Blend modes are not used, so tape and stamps stay visible on dusk.
 
@@ -51,7 +52,7 @@ Icons are drawn in `guest-ui.tsx` (24 px grid, round caps). No emoji as icons.
 
 ## Motion
 
-The hero and cards have one entry, and the Photobook has its page turn. `prefers-reduced-motion` turns them all off.
+The hero has one entry, cards lift on hover, and the Photobook has its page turn. `prefers-reduced-motion` turns them all off.
 
 ## Photography
 

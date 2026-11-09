@@ -297,7 +297,7 @@ export function PhotobookView({
                 </div>
               ) : null}
 
-              {/* The gutter: pages curve into the binding, held by gold thread. */}
+              {/* The gutter: pages curve into the binding, held by thread. */}
               <div className="pb-gutter pointer-events-none absolute inset-y-0 left-1/2 z-20 -translate-x-1/2" aria-hidden />
             </div>
 

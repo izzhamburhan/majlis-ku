@@ -152,7 +152,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 ).map(([wish, by]) => (
                   <li key={wish} className="font-serif text-[1.6rem] leading-snug">
                     {t(`venue.${wish}`)}
-                    <span className="mt-2 block font-sans text-base font-semibold text-brand">{t(`venue.${by}`)}</span>
+                    <span className="mt-2 block font-[family-name:var(--font-st-ui)] text-base font-semibold text-brand">{t(`venue.${by}`)}</span>
                   </li>
                 ))}
               </ul>

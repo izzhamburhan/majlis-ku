@@ -28,7 +28,6 @@
     "photos": {
       "joy": "Smiling newlyweds hugging in a field",
       "pink": "Bride and groom in pink traditional clothes",
-      "mono": "Couple holding a bouquet, black and white",
       "mono": "Bride holding a bouquet and leaning on her groom, black and white",
       "outdoor": "Groom carrying his bride outdoors",
       "leaves": "Bride in a white hijab in front of green leaves",
@@ -37,7 +36,6 @@
     },
     "strip": {
       "title": "Every guest sees your event from a different angle",
-      "label": "Example guest memories",
       "badge": "Example",
       "label": "Example guest memories",
       "names": {
@@ -82,7 +80,6 @@
     "pricing": {
       "title": "Plans and pricing",
       "uploads": "{count, plural, one {# upload} other {# uploads}}",
-      "unlimited": "Unlimited uploads",
       "unlimited": "Unlimited uploads (fair use)",
       "retention": "Kept for {days, plural, one {# day} other {# days}}",
       "gallery": "Guest gallery"

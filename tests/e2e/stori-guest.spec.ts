@@ -62,6 +62,16 @@ test("guest page is inside the Stori root", async ({ page }) => {
   expect(background).toBe("rgb(37, 29, 42)");
 });
 
+test("withdrawn consent stays withdrawn after a reload", async ({ page }) => {
+  await join(page, `/${slug}`);
+  await agreeToConsent(page);
+  await page.getByLabel("Saya faham dan bersetuju").uncheck();
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByLabel("Saya faham dan bersetuju")).not.toBeChecked();
+  await expect(page.getByRole("button", { name: "Ambil gambar" })).toBeDisabled();
+});
+
 test("shutter and gallery picker stay disabled until consent is agreed", async ({ page }) => {
   await join(page, `/${slug}`);
   const label = page.getByLabel("Saya faham dan bersetuju");
