@@ -1,58 +1,58 @@
-# Majlis Ku design: Songket
+# Majlis Ku design: Stori
 
-The guest page (`/[slug]`) and the Photobook TV layout (`/slideshow/[eventId]?layout=photobook`) share one visual world, **Songket**: woven cloth in the host's own colour with gold weft. Host and admin screens keep the plain cream app style for now.
+Landing, guest pages, host dashboard and the Photobook TV layout share one visual world, **Stori**: the photo fills the screen and a few controls float over it, the way guests know from phone stories. Admin, sign-in, privacy, terms, the e-card and the other TV layouts keep their own look.
 
-Decided with the developer on 2026-11-01 (`docs/specs/guest-flow-v2.md` §7). Code: `src/lib/songket.ts`, `src/lib/fonts.ts`, the "Songket world" and "Photobook" blocks in `src/app/globals.css`.
+Decided with the developer on 2026-11-08 (`docs/specs/guest-stori.md`). The colours are provisional and will be revisited, so every colour lives in one place. Code: `src/lib/stori.ts`, `src/components/stori-root.tsx`, `src/lib/fonts.ts`, the `.stori` and `.st-*` rules and the "Photobook" block in `src/app/globals.css`.
+
+## How the theme applies
+
+`StoriRoot` wraps a page in `.stori`, sets the variables from `storiVars()` inline, and sets the `html, body` background. Tailwind tokens (`bg-brand`, `text-ink`, `bg-surface`, and so on) are overridden inside that scope only, and their `@theme` defaults keep other pages unchanged. The Photobook applies `.stori` on its own root, so the other TV layouts are not affected.
+
+Inside `.stori`, use the tokens, never `bg-white`, `text-white` or palette colours such as `text-red-700`. `tests/unit/stori-tokens.test.ts` enforces this. A line that must stay literal (a template preview, white text on a photo) carries a `stori-keep` comment. Guest-facing components use solid `text-muted`, not `text-ink/70`: where `color-mix` is missing, Tailwind falls back to the original dark hex, which is unreadable on dusk.
 
 ## Colour
 
-The ground comes from the event's `themeColor`, so every wedding looks like its own cloth. `songketPalette()` keeps the colour's hue in OKLCH and fixes lightness, so ivory text always clears 7:1. Near-grey hosts (white, black, silver) get a quiet warm ground.
-
 | Token | Value | Use |
 | --- | --- | --- |
-| `--sk-ground` | host hue, L 0.30 | page field |
-| `--sk-ground-deep` | host hue, L 0.22 | bands, body behind the page, shadows |
-| `--sk-ground-lift` | host hue, L 0.37 | arch fill, the shutter's lens |
-| `--sk-ink` | host hue, L 0.27 | handwriting on paper (Photobook wish) |
-| `--sk-gold` | `#c9a24a` | weft: bands, rules, shutter ring, primary buttons |
-| `--sk-gold-light` | `#ecd394` | highlights, counters, focus ring |
-| `--sk-ivory` | `#f6eedc` | text on the ground |
-| paper | `#f4ebd8` + fine grain | `.pb-paper`: the kad sheet, Photobook pages |
+| `ground` | `#251D2A` | page field, text on peach |
+| `groundDeep` | `#1A1420` | TV surround, deepest areas |
+| `surface` | `#352A3D` | panels, sheets, cards |
+| `surfaceLift` | `#40344A` | secondary buttons, pressed areas |
+| `line` | `#6B5B75` | hairlines, panel borders |
+| `ink` | `#FFFFFF` | text |
+| `muted` | `#D6CADB` | secondary text |
+| `brand` | `#F2D6C4` | peach: primary action, shutter, Photobook wish card |
+| `brandDark` | `#E3BFA8` | primary action, hover |
+| `danger` | `#FFB4A8` | errors, delete |
+| `success` | `#A8E0B8` | confirmations |
 
-Gold is weft, not paint: use it for bands, rules, rings and the primary action only. Never gradient text, never gold body copy.
+`tests/unit/stori-colour.test.ts` holds these pairs to WCAG AA. `Event.themeColor` no longer tints guest pages or the TV.
 
 ## Type
 
 | Role | Face | Where |
 | --- | --- | --- |
-| Display | Marcellus (inscriptional) | names, headings, captions on prints (`.sk-display`) |
-| UI | Hanken Grotesk | everything else on Songket pages |
-| Pen | Nanum Pen Script | the guest's wish on the Photobook page only (`.sk-pen`) |
+| Display | Yeseva One | names, headings, prices |
+| UI | Albert Sans | everything else |
+| Pen | Nanum Pen Script | the wish and date caption on the Photobook only |
 
-Self-hosted through `next/font` (no request to Google from guest pages). No label above a heading: the event type sits under the names.
-
-## Motifs
-
-- **Pucuk rebung band** (`.sk-band`, `.sk-band-lg`): gold bamboo-shoot triangles; top and bottom of every Songket page.
-- **Woven ground** (`.songket`): two fine thread layers, barely visible.
-- **Gerbang arch** (`.sk-arch`): the cover photo's frame, with two gold edges; the couple's monogram when there is no cover.
-- **Bunga cengkih** (`Bunga` in `guest-ui.tsx`): the eight-point clove flower; the thanks state.
-- **Rule** (`.sk-rule`): gold hairline that fades out at both ends, holding the counters.
-
-Icons are drawn in `guest-ui.tsx` (24 px grid, 1.6 stroke, round caps). No emoji as icons.
+All are self-hosted through `next/font`: no request to Google from guest pages.
 
 ## Components
 
-- **Shutter** (`.sk-shutter`): 128 px gold ring around a deep lens with the camera icon; the one primary action. Disabled = desaturated.
-- **Kad sheet**: ivory paper panel for consent, wish, video and voice. Inside it, the shared pickers keep their ink styles; `--color-brand` maps to the host's ground.
-- **Secondary row**: Video · Suara · Ucapan in three columns between gold hairlines, not cards.
-- **Gambar saya**: 64 px thumbnails with a gold progress line; failures listed under the strip with a retry.
-- **Photobook spread**: two paper pages on the ground, spine shading, a photobooth print (single, gold photo corners, captioned with names and date) or a three-shot strip; the wish in pen, signed. Pages turn on the spine (1.4 s); reduced motion cross-fades.
+- **Hero**: the cover fills the first viewport, server-rendered so plans without the gallery keep it. A scrim holds text at 4.5:1 over any photo. With no cover, or before the PIN, it shows the monogram on dusk.
+- **Dock**: fixed pill at the bottom: Galeri, Video, raised shutter, Suara, Ucapan. Menu state only.
+- **Consent**: an inline panel above the dock with no dismiss control, then one quiet line that can undo it. Never a modal.
+- **Sheets**: PIN, name, video, voice, wish and thanks are dusk panels in normal page flow. No `<dialog>`, no `inert`: the name form works without JavaScript.
+- **Glass** (`.st-glass`): translucent dusk with blur; solid dusk where `backdrop-filter` or `color-mix` is missing.
+- **Photobook spread**: open album on dusk with dusk pages and a peach wish card. Spreads, the three mounts (gilded frame, taped polaroid, photobooth strip), page numbers and the page turn are unchanged. Blend modes are not used, so tape and stamps stay visible on dusk.
+
+Icons are drawn in `guest-ui.tsx` (24 px grid, round caps). No emoji as icons.
 
 ## Motion
 
-One entry (`.sk-rise`, 700 ms ease-out from visible) and the page turn. `prefers-reduced-motion` turns both off.
+The hero and cards have one entry, and the Photobook has its page turn. `prefers-reduced-motion` turns them all off.
 
-## Browser surfaces
+## Photography
 
-`.songket` themes selection (gold on deep), caret (gold light), focus ring (2 px gold light, 3 px offset) and `accent-color` (gold).
+Landing photos are in `public/landing/`, listed in `docs/landing-photos.md`. They are stock photos of real people: replace them with model-released or commissioned photos before public launch.

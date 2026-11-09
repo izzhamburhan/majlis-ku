@@ -1,6 +1,6 @@
 # Majlis Ku: Codebase Handbook (Claude Code)
 
-Owner: Izzham Burhan, TMRND. Last updated: 2026-10-22.
+Owner: Izzham Burhan, TMRND. Last updated: 2026-11-09.
 Other agent platforms (Codex, Gemini CLI, Copilot) read `AGENTS.md`. This file is the Claude Code entry point. Both files describe the same project and rules; keep them in sync.
 
 ## What this is
@@ -94,7 +94,8 @@ prisma/                  schema.prisma, migrations, seed.ts
 tests/unit/              Vitest
 tests/e2e/               Playwright
 docs/brief.md            the product brief (source of the requirements)
-DESIGN.md                the Songket visual system for guest pages and the Photobook TV (tokens, type, motifs)
+DESIGN.md                the Stori visual system for the landing, guest and host pages and the Photobook TV (tokens, type, components)
+public/landing/          stock photos for the landing page, listed in docs/landing-photos.md
 docs/specs/, docs/plans/ one spec and one plan per phase or change
 playbook.md              the process: gates, git rules, validation, Definition of Done
 .claude/skills/          process and guard skills (Codex twins in .codex/skills/)
@@ -117,7 +118,8 @@ scripts/                 worktree-add/cleanup, skills.mjs (sync and parity check
 | 6 Payments and plans | deferred by the developer (plans and limits still enforced) |
 | 7 Admin panel: overview, events (plan change, suspend, delete), users, abuse reports with a guest report form, plans and prices, templates, audit log; admins read-only on host dashboards | done |
 | 8a Local hardening: retention purge job, shared Postgres rate limiter, privacy and terms pages, security headers, `/api/health`, e2e for these | done |
-| Guest flow v2 (`docs/specs/guest-flow-v2.md`): Songket camera-first guest page, disposable shot limit per guest (`Event.shotsPerGuest`), Photobook TV layout (one guest per spread: photobooth print or strip plus their wish). Visual system in `DESIGN.md` | in review |
+| Guest flow v2 (`docs/specs/guest-flow-v2.md`): camera-first guest page, disposable shot limit per guest (`Event.shotsPerGuest`), Photobook TV layout (one guest per spread: photobooth print or strip plus their wish) | in review |
+| Stori redesign (`docs/specs/guest-stori.md`): photo-led dusk theme on the landing page, guest page, gallery, report page, host pages and Photobook TV, replacing Songket. Colours are provisional. Visual system in `DESIGN.md` | in review |
 | 8b Deployment hardening: Dockerfile, S3/R2 `StorageDriver`, deployment guide, client IP trust behind the proxy, HSTS, PIN guessing across devices (per-IP limit) | next |
 
 ## Commands
