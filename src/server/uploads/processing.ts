@@ -3,13 +3,13 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Upload } from "@prisma/client";
-import sharp from "sharp";
 import { db } from "@/server/db";
 import { uploadToItem, wishToItem } from "@/server/gallery/items";
 import { makeVideoCopies, makeVoiceCopy } from "@/server/media/ffmpeg";
 import { THUMB_WIDTH } from "@/server/media/images";
 import { mediaQueue } from "@/server/media/job-queue";
 import { uploadKey } from "@/server/media/keys";
+import sharp from "@/server/media/sharp";
 import { storage } from "@/server/media/storage";
 import { MAX_VOICE_SECONDS } from "@/server/plans/limits";
 import { bus } from "@/server/realtime/bus";
@@ -36,23 +36,33 @@ async function markFailed(upload: Upload, reason: string): Promise<void> {
   await storage().deletePrefix(`events/${upload.eventId}/${upload.id}`);
 }
 
-async function processMedia(uploadId: string): Promise<void> {
+/** What processMedia runs ffmpeg through and where it keeps temporary files; tests replace them. */
+export type MediaRunner = {
+  makeVideoCopies: typeof makeVideoCopies;
+  makeVoiceCopy: typeof makeVoiceCopy;
+  tmpRoot: string;
+};
+
+/** Convert one video or voice upload. Everything it writes to disk lives in one temporary folder that is always removed. */
+export async function processMedia(uploadId: string, runner: Partial<MediaRunner> = {}): Promise<void> {
+  const { makeVideoCopies: makeVideo = makeVideoCopies, makeVoiceCopy: makeVoice = makeVoiceCopy, tmpRoot = tmpdir() } = runner;
   const upload = await db.upload.findUnique({ where: { id: uploadId }, include: { event: { include: { plan: true } } } });
   if (!upload || upload.status !== "PROCESSING") return;
   const store = storage();
-  const input = store.pathFor(upload.objectKey);
-  const work = await mkdtemp(join(tmpdir(), "majlis-media-"));
+  const work = await mkdtemp(join(tmpRoot, "majlis-media-"));
   try {
+    const input = join(work, "input");
+    await store.downloadToFile(upload.objectKey, input);
     if (upload.kind === "VIDEO") {
       const maxSeconds = upload.event.plan.maxVideoSeconds ?? 60;
-      const copies = await makeVideoCopies(input, work, { maxSeconds });
+      const copies = await makeVideo(input, work, { maxSeconds });
       if (copies.durationSec > maxSeconds + 1) return await markFailed(upload, "too_long");
       const poster = await readFile(copies.poster);
       const meta = await sharp(poster).metadata();
       const thumb = await sharp(poster).resize({ width: THUMB_WIDTH, withoutEnlargement: true }).webp({ quality: 72 }).toBuffer();
       const displayKey = uploadKey(upload.eventId, upload.id, "display.mp4");
       const thumbKey = uploadKey(upload.eventId, upload.id, "thumb.webp");
-      await store.putObject(displayKey, await readFile(copies.video), "video/mp4");
+      await store.putObjectFromFile(displayKey, copies.video, "video/mp4");
       await store.putObject(thumbKey, thumb, "image/webp");
       await db.upload.update({
         where: { id: upload.id },
@@ -66,10 +76,10 @@ async function processMedia(uploadId: string): Promise<void> {
         },
       });
     } else if (upload.kind === "VOICE") {
-      const copy = await makeVoiceCopy(input, work);
+      const copy = await makeVoice(input, work);
       if (copy.durationSec > MAX_VOICE_SECONDS + 1) return await markFailed(upload, "too_long");
       const displayKey = uploadKey(upload.eventId, upload.id, "display.m4a");
-      await store.putObject(displayKey, await readFile(copy.audio), "audio/mp4");
+      await store.putObjectFromFile(displayKey, copy.audio, "audio/mp4");
       await db.upload.update({ where: { id: upload.id }, data: { status: "READY", displayKey, durationSec: Math.round(copy.durationSec) } });
     } else {
       return;

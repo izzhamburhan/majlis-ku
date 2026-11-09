@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkUploadAllowed, KIND_MAX_BYTES, type PlanLimits } from "@/server/plans/limits";
+import { checkStoredObject, checkUploadAllowed, KIND_MAX_BYTES, maxObjectBytes, type PlanLimits } from "@/server/plans/limits";
 
 const MB = 1024 * 1024;
 
@@ -90,3 +90,38 @@ describe("checkUploadAllowed after an admin plan change", () => {
     expect(checkUploadAllowed(premium, { ...usage, uploadCount: 100 }, { kind: "PHOTO", sizeBytes: MB })).toEqual({ ok: true });
   });
 });
+
+describe("deployment object cap (S3_MAX_OBJECT_BYTES)", () => {
+  it("maxObjectBytes is the smallest of the kind cap, the plan cap and the deployment cap", () => {
+    expect(maxObjectBytes(free, "PHOTO")).toBe(BigInt(15 * MB));
+    expect(maxObjectBytes(premium, "PHOTO")).toBe(KIND_MAX_BYTES.PHOTO);
+    expect(maxObjectBytes(premium, "VIDEO")).toBe(BigInt(200 * MB));
+    expect(maxObjectBytes(premium, "VIDEO", 50 * MB)).toBe(BigInt(50 * MB));
+    expect(maxObjectBytes(premium, "VIDEO", 500 * MB)).toBe(BigInt(200 * MB));
+  });
+
+  it("checkUploadAllowed refuses a size above the deployment cap", () => {
+    expect(checkUploadAllowed(premium, usage, { kind: "VIDEO", sizeBytes: 51 * MB }, 50 * MB)).toEqual({ ok: false, code: "too_large" });
+    expect(checkUploadAllowed(premium, usage, { kind: "VIDEO", sizeBytes: 50 * MB }, 50 * MB).ok).toBe(true);
+  });
+});
+
+describe("checkStoredObject", () => {
+  it("accepts a size inside every limit", () => {
+    expect(checkStoredObject(free, 0n, "PHOTO", 2 * MB)).toEqual({ ok: true });
+  });
+
+  it("refuses empty, over-cap and over-storage objects, counting the actual size", () => {
+    expect(checkStoredObject(free, 0n, "PHOTO", 0)).toEqual({ ok: false, code: "too_large" });
+    expect(checkStoredObject(free, 0n, "PHOTO", 16 * MB)).toEqual({ ok: false, code: "too_large" });
+    expect(checkStoredObject(premium, 0n, "VIDEO", 51 * MB, 50 * MB)).toEqual({ ok: false, code: "too_large" });
+    expect(checkStoredObject(free, BigInt(2048 * MB - MB), "PHOTO", 2 * MB)).toEqual({ ok: false, code: "storage_full" });
+    expect(checkStoredObject(free, BigInt(2048 * MB - 2 * MB), "PHOTO", 2 * MB)).toEqual({ ok: true });
+  });
+
+  it("does not look at the item count or the video flag, which were settled when the upload started", () => {
+    const noVideoNoItems: PlanLimits = { ...free, uploadLimit: 0, videoAllowed: false };
+    expect(checkStoredObject(noVideoNoItems, 0n, "VIDEO", MB)).toEqual({ ok: true });
+  });
+});
+

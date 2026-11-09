@@ -1,0 +1,171 @@
+import type { UploadKind } from "@prisma/client";
+import sharp from "sharp";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { fakeState, resetFakeDb, type FakeEvent } from "../support/fake-db";
+import { fakeStorage, setUpFakeStorage, tearDownFakeStorage } from "../support/fake-storage";
+
+vi.mock("server-only", () => ({}));
+const testEnv = vi.hoisted(() => ({ cap: undefined as number | undefined }));
+vi.mock("@/lib/env", () => ({ env: () => ({ S3_MAX_OBJECT_BYTES: testEnv.cap, HASH_SALT: "test-salt-test-salt" }) }));
+vi.mock("@/server/db", async () => ({ db: (await import("../support/fake-db")).fakeDb }));
+vi.mock("@/server/media/storage", async () => (await import("../support/fake-storage")).storageModule);
+vi.mock("@/server/events/service", async () => ({
+  pendingUploadCount: async (eventId: string) => (await import("../support/fake-db")).fakeDb.upload.count({ where: { eventId, status: "PENDING" } }),
+}));
+vi.mock("@/server/uploads/processing", () => ({ enqueueProcessing: vi.fn(), publishUpload: vi.fn(async () => undefined) }));
+
+const { startUpload, completeUpload } = await import("@/server/uploads/service");
+
+type StartArgs = Parameters<typeof startUpload>[0];
+const guest = { id: "g1", displayName: "Pak Mat" } as unknown as StartArgs["guest"];
+const MB = 1024 * 1024;
+
+let jpeg: Buffer;
+let event: FakeEvent;
+
+beforeAll(async () => {
+  await setUpFakeStorage();
+  jpeg = await sharp({ create: { width: 64, height: 48, channels: 3, background: "#b33" } }).jpeg().toBuffer();
+});
+afterAll(tearDownFakeStorage);
+beforeEach(() => {
+  event = resetFakeDb();
+  testEnv.cap = undefined;
+});
+
+/** Start an upload and return the key the signed URL is for (what the browser would PUT to). */
+async function start(bytes: Buffer, kind: UploadKind = "PHOTO", mimeType = "image/jpeg") {
+  const target = await startUpload({ event: event as unknown as StartArgs["event"], guest, kind, mimeType, sizeBytes: bytes.length });
+  const signedKey = new URL(target.url, "http://localhost").searchParams.get("key")!;
+  const base = `events/${event.id}/${target.uploadId}`;
+  return { uploadId: target.uploadId, signedKey, incoming: `${base}/incoming`, original: `${base}/original` };
+}
+
+const complete = (uploadId: string) => completeUpload({ eventId: event.id, uploadId, guestId: guest.id });
+const put = (key: string, bytes: Buffer) => fakeStorage.driver.putObject(key, bytes, "image/jpeg");
+
+async function expectRejectedAndDeleted(uploadId: string, code: string, status: number, keys: string[]) {
+  await expect(complete(uploadId)).rejects.toMatchObject({ code, status });
+  for (const key of keys) expect(await fakeStorage.driver.stat(key)).toBeNull();
+  expect(fakeState.uploads.find((u) => u.id === uploadId)?.status).toBe("FAILED");
+  expect(event.uploadCount).toBe(0);
+  expect(event.storageBytes).toBe(0n);
+}
+
+describe("startUpload", () => {
+  it("signs the incoming key and stores the original key", async () => {
+    const { signedKey, incoming, original, uploadId } = await start(jpeg);
+    expect(signedKey).toBe(incoming);
+    expect(fakeState.uploads.find((u) => u.id === uploadId)?.objectKey).toBe(original);
+  });
+
+  it("refuses a declared size above S3_MAX_OBJECT_BYTES before any upload row exists", async () => {
+    testEnv.cap = 100;
+    await expect(start(Buffer.alloc(500, 1))).rejects.toMatchObject({ code: "too_large", status: 413 });
+    expect(fakeState.uploads).toHaveLength(0);
+  });
+});
+
+describe("completeUpload", () => {
+  it("completeUpload copies incoming to original and deletes incoming", async () => {
+    const { uploadId, incoming, original } = await start(jpeg);
+    await put(incoming, jpeg);
+
+    expect(await complete(uploadId)).toEqual({ status: "READY" });
+
+    expect(await fakeStorage.driver.getObject(original)).toEqual(jpeg);
+    expect(await fakeStorage.driver.stat(incoming)).toBeNull();
+    expect(event.uploadCount).toBe(1);
+    expect(event.storageBytes).toBe(BigInt(jpeg.length));
+    expect(fakeState.uploads[0]?.displayKey).toBe(`events/${event.id}/${uploadId}/display.jpg`);
+  });
+
+  it("a replaced incoming object cannot change original after complete", async () => {
+    const { uploadId, signedKey, original } = await start(jpeg);
+    await put(signedKey, jpeg);
+    await complete(uploadId);
+
+    // The signed URL is still valid for a while; whatever is PUT to it now must not reach what is served.
+    await put(signedKey, Buffer.from("swapped after the check"));
+    expect(await complete(uploadId)).toEqual({ status: "READY" });
+
+    expect(await fakeStorage.driver.getObject(original)).toEqual(jpeg);
+  });
+
+  it("is idempotent on a retry after it already succeeded", async () => {
+    const { uploadId, incoming } = await start(jpeg);
+    await put(incoming, jpeg);
+    await complete(uploadId);
+    await complete(uploadId);
+    expect(event.uploadCount).toBe(1);
+    expect(event.storageBytes).toBe(BigInt(jpeg.length));
+  });
+
+  it("finishes when an earlier attempt already moved incoming to original but did not record it", async () => {
+    const { uploadId, incoming, original } = await start(jpeg);
+    await put(incoming, jpeg);
+    await fakeStorage.driver.copyObject(incoming, original);
+    await fakeStorage.driver.deleteObject(incoming);
+
+    expect(await complete(uploadId)).toEqual({ status: "READY" });
+    expect(event.uploadCount).toBe(1);
+  });
+
+  it("answers not_uploaded while nothing has arrived, and leaves the upload pending", async () => {
+    const { uploadId } = await start(jpeg);
+    await expect(complete(uploadId)).rejects.toMatchObject({ code: "not_uploaded", status: 409 });
+    expect(fakeState.uploads[0]?.status).toBe("PENDING");
+  });
+
+  it("rejects when actual size differs from declared", async () => {
+    const { uploadId, incoming, original } = await start(jpeg);
+    await put(incoming, Buffer.concat([jpeg, Buffer.alloc(10)]));
+    await expectRejectedAndDeleted(uploadId, "invalid_file", 422, [incoming, original]);
+  });
+
+  it("rejects an empty object", async () => {
+    const { uploadId, incoming, original } = await start(jpeg);
+    await put(incoming, Buffer.alloc(0));
+    await expectRejectedAndDeleted(uploadId, "invalid_file", 422, [incoming, original]);
+  });
+
+  it("rejects bytes that are not the declared kind of file", async () => {
+    const text = Buffer.from("this is not a picture at all, just some text");
+    const { uploadId, incoming, original } = await start(text);
+    await put(incoming, text);
+    await expectRejectedAndDeleted(uploadId, "invalid_file", 422, [incoming, original]);
+  });
+
+  it("rejects above min(kind limit, plan.maxUploadBytes): the plan cap", async () => {
+    const { uploadId, incoming, original } = await start(jpeg);
+    event.plan.maxUploadBytes = BigInt(jpeg.length - 1); // lowered after the URL was issued
+    await put(incoming, jpeg);
+    await expectRejectedAndDeleted(uploadId, "too_large", 413, [incoming, original]);
+  });
+
+  it("rejects above min(kind limit, plan.maxUploadBytes): the kind limit", async () => {
+    const big = Buffer.concat([jpeg, Buffer.alloc(15 * MB)]); // still starts like a JPEG, but over the 15 MB photo limit
+    const { uploadId, incoming, original } = await start(jpeg);
+    fakeState.uploads[0]!.sizeBytes = BigInt(big.length); // declared == actual, so only the limit can reject it
+    await put(incoming, big);
+    await expectRejectedAndDeleted(uploadId, "too_large", 413, [incoming, original]);
+  });
+
+  it("rejects when it would pass storageLimitBytes", async () => {
+    const { uploadId, incoming, original } = await start(jpeg);
+    event.plan.storageLimitBytes = BigInt(jpeg.length * 3);
+    event.storageBytes = BigInt(jpeg.length * 2 + 1); // other uploads finished meanwhile
+    await put(incoming, jpeg);
+    await expect(complete(uploadId)).rejects.toMatchObject({ code: "storage_full", status: 409 });
+    for (const key of [incoming, original]) expect(await fakeStorage.driver.stat(key)).toBeNull();
+    expect(fakeState.uploads[0]?.status).toBe("FAILED");
+    expect(event.uploadCount).toBe(0);
+  });
+
+  it("rejects above S3_MAX_OBJECT_BYTES", async () => {
+    const { uploadId, incoming, original } = await start(jpeg);
+    testEnv.cap = jpeg.length - 1;
+    await put(incoming, jpeg);
+    await expectRejectedAndDeleted(uploadId, "too_large", 413, [incoming, original]);
+  });
+});

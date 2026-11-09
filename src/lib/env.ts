@@ -29,6 +29,8 @@ const schema = z.object({
   S3_BUCKET: optional,
   S3_ACCESS_KEY_ID: optional,
   S3_SECRET_ACCESS_KEY: optional,
+  // Largest single file in bytes, below the plan's own cap; for a storage service with a per-file limit.
+  S3_MAX_OBJECT_BYTES: z.coerce.number().int().positive().optional(),
   CRON_SECRET: z.string().trim().min(16).optional(),
 });
 

@@ -8,10 +8,22 @@ export function assertSafeKey(key: string): string {
   return key;
 }
 
-export type MediaVariant = "original" | "display.jpg" | "thumb.webp" | "display.m4a" | "display.mp4" | "poster.jpg";
+export type MediaVariant = "incoming" | "original" | "display.jpg" | "thumb.webp" | "display.m4a" | "display.mp4" | "poster.jpg";
 
 export function uploadKey(eventId: string, uploadId: string, variant: MediaVariant): string {
   return assertSafeKey(`events/${eventId}/${uploadId}/${variant}`);
+}
+
+/** Where a guest's browser PUTs the file. completeUpload verifies it and copies it to `original`; nothing is served from here. */
+export function incomingKey(eventId: string, uploadId: string): string {
+  return uploadKey(eventId, uploadId, "incoming");
+}
+
+const INCOMING_PATTERN = /^events\/[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*\/incoming$/i;
+
+/** True only for keys made by incomingKey. The local upload route accepts nothing else. */
+export function isIncomingKey(key: string): boolean {
+  return INCOMING_PATTERN.test(key);
 }
 
 export function coverKey(eventId: string, version: string): string {

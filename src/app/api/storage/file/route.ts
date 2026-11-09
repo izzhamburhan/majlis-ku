@@ -2,7 +2,7 @@ import { stat } from "node:fs/promises";
 import { Readable } from "node:stream";
 import { apiError } from "@/server/http";
 import { verifyStorageParams } from "@/server/media/signing";
-import { storage, storageSecret } from "@/server/media/storage";
+import { localDriver, storageSecret } from "@/server/media/storage";
 
 export const runtime = "nodejs";
 
@@ -34,7 +34,8 @@ export async function GET(request: Request) {
   const verified = verifyStorageParams("get", params, storageSecret());
   if (!verified.ok) return apiError(verified.code, 403);
 
-  const store = storage();
+  const store = localDriver();
+  if (!store) return apiError("not_found", 404);
   const path = store.pathFor(verified.key);
   let size: number;
   try {

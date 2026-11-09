@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import sharp from "./sharp";
 
 export const DISPLAY_MAX = 2048;
 export const THUMB_WIDTH = 400;

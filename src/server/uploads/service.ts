@@ -1,12 +1,13 @@
 import "server-only";
 import type { Event, Guest, Plan, Upload, UploadKind } from "@prisma/client";
+import { env } from "@/lib/env";
 import { pendingUploadCount } from "@/server/events/service";
 import { ApiError } from "@/server/http";
 import { baseMime, detectedMatchesKind, detectMime, isAllowedMime, SNIFF_BYTES } from "@/server/media/file-check";
 import { processPhoto } from "@/server/media/images";
-import { uploadKey } from "@/server/media/keys";
+import { incomingKey, uploadKey } from "@/server/media/keys";
 import { storage, UPLOAD_URL_TTL_SEC } from "@/server/media/storage";
-import { checkUploadAllowed, KIND_MAX_BYTES } from "@/server/plans/limits";
+import { checkStoredObject, checkUploadAllowed, maxObjectBytes } from "@/server/plans/limits";
 import { db } from "@/server/db";
 import { enqueueProcessing, publishUpload } from "./processing";
 import { checkShotAllowed, guestShotsUsed } from "./shots";
@@ -41,15 +42,16 @@ export async function startUpload({
   if (!ENABLED_KINDS.includes(kind)) throw new ApiError("kind_not_available", 400);
   if (!isAllowedMime(kind, mimeType)) throw new ApiError("invalid_type", 415);
 
+  const objectCap = env().S3_MAX_OBJECT_BYTES;
   const usage = { uploadCount: event.uploadCount, pendingCount: await pendingUploadCount(event.id), storageBytes: event.storageBytes };
-  const allowed = checkUploadAllowed(event.plan, usage, { kind, sizeBytes, durationSec: durationSec ?? null });
+  const allowed = checkUploadAllowed(event.plan, usage, { kind, sizeBytes, durationSec: durationSec ?? null }, objectCap);
   if (!allowed.ok) throw new ApiError(allowed.code, LIMIT_MESSAGES[allowed.code] ?? 400);
   if (kind === "PHOTO" && event.shotsPerGuest !== null) {
     const shot = checkShotAllowed(event.shotsPerGuest, await guestShotsUsed(db, event.id, guest.id));
     if (!shot.ok) throw new ApiError(shot.code, 409);
   }
 
-  const maxBytes = Number(event.plan.maxUploadBytes < KIND_MAX_BYTES[kind] ? event.plan.maxUploadBytes : KIND_MAX_BYTES[kind]);
+  const maxBytes = Number(maxObjectBytes(event.plan, kind, objectCap));
   const upload = await db.upload.create({
     data: {
       eventId: event.id,
@@ -64,37 +66,65 @@ export async function startUpload({
       moderation: event.requireApproval ? "PENDING_APPROVAL" : "VISIBLE",
     },
   });
+  // The row keeps the final key. The browser gets a URL for `incoming` only: completeUpload copies a verified
+  // object to `original`, so nothing the guest can still write to is ever served.
   const objectKey = uploadKey(event.id, upload.id, "original");
   await db.upload.update({ where: { id: upload.id }, data: { objectKey } });
-  const target = await storage().createUploadUrl(objectKey, { contentType: mimeType, maxBytes, expiresInSec: UPLOAD_URL_TTL_SEC });
+  const target = await storage().createUploadUrl(incomingKey(event.id, upload.id), {
+    contentType: mimeType,
+    maxBytes,
+    sizeBytes,
+    expiresInSec: UPLOAD_URL_TTL_SEC,
+  });
   return { uploadId: upload.id, ...target };
 }
 
-async function fail(upload: Upload, code: string): Promise<never> {
+async function fail(upload: Upload, code: string, status = 422): Promise<never> {
   await db.upload.update({ where: { id: upload.id }, data: { status: "FAILED" } });
   await storage().deletePrefix(`events/${upload.eventId}/${upload.id}`);
-  throw new ApiError(code, 422);
+  throw new ApiError(code, status);
 }
 
-/** Verify the stored file (size, magic bytes), make web copies, and count it against the plan. */
+/**
+ * Verify what the guest uploaded to `incoming` (size, plan limits, magic bytes), move it to `original`, make web
+ * copies, and count it against the plan. Safe to call again: a finished upload answers with its status, and an
+ * upload whose file was already moved carries on from `original`.
+ */
 export async function completeUpload({ eventId, uploadId, guestId }: { eventId: string; uploadId: string; guestId: string }) {
   const upload = await db.upload.findFirst({ where: { id: uploadId, eventId, guestId } });
   if (!upload) throw new ApiError("not_found", 404);
   if (upload.status === "READY" || upload.status === "PROCESSING") return { status: upload.status };
   if (upload.status === "FAILED") throw new ApiError("invalid_file", 422);
 
-  const store = storage();
-  const info = await store.stat(upload.objectKey);
-  if (!info) throw new ApiError("not_uploaded", 409);
-  if (info.size === 0 || info.size > Number(KIND_MAX_BYTES[upload.kind])) return fail(upload, "invalid_file");
+  const event = await db.event.findUnique({ where: { id: eventId }, include: { plan: true } });
+  if (!event) throw new ApiError("not_found", 404);
 
+  const store = storage();
+  const incoming = incomingKey(eventId, upload.id);
+  const staged = await store.stat(incoming);
+  // An earlier attempt may have moved the file and stopped before recording it; `original` only ever holds verified bytes.
+  const info = staged ?? (await store.stat(upload.objectKey));
+  if (!info) throw new ApiError("not_uploaded", 409);
+
+  // The server decides from the real size, never from what the client declared.
+  if (info.size !== Number(upload.sizeBytes)) return fail(upload, "invalid_file");
+  const withinLimits = checkStoredObject(event.plan, event.storageBytes, upload.kind, info.size, env().S3_MAX_OBJECT_BYTES);
+  if (!withinLimits.ok) return fail(upload, withinLimits.code, LIMIT_MESSAGES[withinLimits.code] ?? 422);
+
+  // Move it out of the guest's reach first, then check what is now there: a swap between the size check
+  // and the copy is caught by the checks below, and a swap after the copy changes nothing that is served.
+  if (staged) {
+    await store.copyObject(incoming, upload.objectKey);
+    await store.deleteObject(incoming);
+  }
+  const stored = await store.stat(upload.objectKey);
+  if (!stored || stored.size !== info.size) return fail(upload, "invalid_file");
   const detected = await detectMime(await store.readHead(upload.objectKey, SNIFF_BYTES));
   if (!detectedMatchesKind(upload.kind, detected)) return fail(upload, "invalid_file");
 
   // Disposable-camera mode: the limit holds at completion too, so uploads started in parallel cannot all get through.
   if (upload.kind === "PHOTO" && upload.guestId) {
-    const event = await db.event.findUnique({ where: { id: eventId }, select: { shotsPerGuest: true } });
-    const shot = checkShotAllowed(event?.shotsPerGuest ?? null, await guestShotsUsed(db, eventId, upload.guestId));
+    const shot = checkShotAllowed(event.shotsPerGuest, await guestShotsUsed(db, eventId, upload.guestId));
     if (!shot.ok) {
       await db.upload.update({ where: { id: upload.id }, data: { status: "FAILED" } });
       await store.deletePrefix(`events/${upload.eventId}/${upload.id}`);

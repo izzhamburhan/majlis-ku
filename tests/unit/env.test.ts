@@ -37,4 +37,13 @@ describe("parseEnv", () => {
     expect(parseEnv(minimal).CRON_SECRET).toBeUndefined();
     expect(parseEnv({ ...minimal, CRON_SECRET: "" }).CRON_SECRET).toBeUndefined();
   });
+
+  it("S3_MAX_OBJECT_BYTES is an optional positive whole number", () => {
+    expect(parseEnv(minimal).S3_MAX_OBJECT_BYTES).toBeUndefined();
+    expect(parseEnv({ ...minimal, S3_MAX_OBJECT_BYTES: "" }).S3_MAX_OBJECT_BYTES).toBeUndefined();
+    expect(parseEnv({ ...minimal, S3_MAX_OBJECT_BYTES: "52428800" }).S3_MAX_OBJECT_BYTES).toBe(52428800);
+    for (const bad of ["0", "-5", "1.5", "50MB"]) {
+      expect(() => parseEnv({ ...minimal, S3_MAX_OBJECT_BYTES: bad }), bad).toThrow(/S3_MAX_OBJECT_BYTES/);
+    }
+  });
 });

@@ -1,5 +1,4 @@
 import "server-only";
-import { createReadStream } from "node:fs";
 import { Readable } from "node:stream";
 import archiver from "archiver";
 import type { Event } from "@prisma/client";
@@ -21,7 +20,11 @@ export async function eventWishesPdf(event: Event, locale: AppLocale): Promise<B
   });
 }
 
-/** A ZIP stream: every original upload in its folder, plus the wishes as PDF and CSV. Built on the fly, never stored. */
+/**
+ * A ZIP stream: every original upload in its folder, plus the wishes as PDF and CSV. Built on the fly, never stored.
+ * Entries are added one at a time: an object is opened only after the previous entry is finished, so an export of
+ * hundreds of files never holds hundreds of connections open or buffers a whole video.
+ */
 export async function eventZipStream(event: Event, locale: AppLocale): Promise<ReadableStream<Uint8Array>> {
   const [uploads, wishes, pdf] = await Promise.all([
     db.upload.findMany({ where: { eventId: event.id, status: "READY" }, orderBy: { createdAt: "asc" } }),
@@ -34,14 +37,32 @@ export async function eventZipStream(event: Event, locale: AppLocale): Promise<R
   archive.on("warning", (error) => console.warn("[export] zip warning", error.message));
   archive.on("error", (error) => console.error("[export] zip error", error));
 
+  /** Add one entry and wait until the archive has taken all of it. False when the archive failed meanwhile. */
+  const append = (source: Readable | Buffer | string, data: { name: string; date?: Date }) =>
+    new Promise<boolean>((resolve) => {
+      const onEntry = () => finish(true);
+      const onError = () => finish(false);
+      const finish = (ok: boolean) => {
+        archive.off("entry", onEntry);
+        archive.off("error", onError);
+        resolve(ok);
+      };
+      archive.once("entry", onEntry);
+      archive.once("error", onError);
+      archive.append(source, data);
+    });
+
   const store = storage();
   const used = new Set<string>();
-  for (const upload of uploads) {
-    if (!(await store.stat(upload.objectKey))) continue;
-    archive.append(createReadStream(store.pathFor(upload.objectKey)), { name: zipEntryName(upload, used), date: upload.createdAt });
-  }
-  archive.append(pdf, { name: "ucapan.pdf" });
-  archive.append(wishesCsv(wishes), { name: "ucapan.csv" });
-  void archive.finalize();
+  void (async () => {
+    for (const upload of uploads) {
+      if (!(await store.stat(upload.objectKey))) continue;
+      const stream = await store.getObjectStream(upload.objectKey);
+      if (!(await append(stream, { name: zipEntryName(upload, used), date: upload.createdAt }))) return archive.destroy();
+    }
+    if (!(await append(pdf, { name: "ucapan.pdf" }))) return archive.destroy();
+    if (!(await append(wishesCsv(wishes), { name: "ucapan.csv" }))) return archive.destroy();
+    await archive.finalize();
+  })().catch((error: unknown) => archive.destroy(error instanceof Error ? error : new Error("export failed")));
   return Readable.toWeb(archive) as ReadableStream<Uint8Array>;
 }

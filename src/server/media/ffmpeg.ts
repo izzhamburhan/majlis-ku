@@ -4,6 +4,10 @@ import ffmpegPath from "ffmpeg-static";
 
 const TIMEOUT_MS = 5 * 60 * 1000;
 
+// One thread for decoding (before -i) and for encoding (before the output file), and one for filters: the free
+// hosting tier has a fraction of a CPU, and a video job must not starve the web server running next to it.
+const ONE_THREAD = ["-threads", "1"];
+
 function binary(): string {
   if (!ffmpegPath) throw new Error("ffmpeg-static has no binary for this platform");
   return ffmpegPath;
@@ -12,7 +16,7 @@ function binary(): string {
 /** Run ffmpeg; resolves with stderr (where ffmpeg prints its info), rejects on a non-zero exit. */
 function ffmpeg(args: string[], { allowFailure = false } = {}): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn(binary(), ["-hide_banner", "-nostdin", ...args], { windowsHide: true });
+    const child = spawn(binary(), ["-hide_banner", "-nostdin", "-filter_threads", "1", ...args], { windowsHide: true });
     let stderr = "";
     child.stderr.on("data", (chunk: Buffer) => {
       stderr += chunk.toString();
@@ -40,7 +44,7 @@ export function parseDuration(text: string): number | null {
 /** Length in seconds, or null if ffmpeg cannot read the file as media. */
 export async function probeDuration(input: string): Promise<number | null> {
   // With no output file ffmpeg exits non-zero, but prints the input's details first.
-  const info = await ffmpeg(["-i", input], { allowFailure: true });
+  const info = await ffmpeg([...ONE_THREAD, "-i", input], { allowFailure: true });
   return parseDuration(info);
 }
 
@@ -54,6 +58,7 @@ export async function makeVideoCopies(input: string, outDir: string, { maxSecond
   const poster = join(outDir, "poster.jpg");
   await ffmpeg([
     "-y",
+    ...ONE_THREAD,
     "-i",
     input,
     "-t",
@@ -74,10 +79,11 @@ export async function makeVideoCopies(input: string, outDir: string, { maxSecond
     "128k",
     "-movflags",
     "+faststart",
+    ...ONE_THREAD,
     video,
   ]);
   const at = durationSec > 1.5 ? "1" : "0";
-  await ffmpeg(["-y", "-ss", at, "-i", video, "-frames:v", "1", "-vf", "scale='min(800,iw)':-2", "-q:v", "4", poster]);
+  await ffmpeg(["-y", "-ss", at, ...ONE_THREAD, "-i", video, "-frames:v", "1", "-vf", "scale='min(800,iw)':-2", "-q:v", "4", ...ONE_THREAD, poster]);
   return { video, poster, durationSec };
 }
 
@@ -86,7 +92,7 @@ export type VoiceCopy = { audio: string; durationSec: number };
 /** AAC in an .m4a container: plays on every phone browser, including older iPhones. */
 export async function makeVoiceCopy(input: string, outDir: string): Promise<VoiceCopy> {
   const audio = join(outDir, "display.m4a");
-  await ffmpeg(["-y", "-i", input, "-vn", "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", audio]);
+  await ffmpeg(["-y", ...ONE_THREAD, "-i", input, "-vn", "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", ...ONE_THREAD, audio]);
   const durationSec = (await probeDuration(audio)) ?? (await probeDuration(input));
   if (durationSec === null) throw new Error("Not a readable audio file");
   return { audio, durationSec };
