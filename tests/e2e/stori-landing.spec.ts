@@ -36,15 +36,30 @@ test("pricing shows prices from the plan table", async ({ page }) => {
   }
 });
 
-test("a changed plan price shows on the page, and the English page uses English names", async ({ page }) => {
-  const plan = await prisma.plan.findUniqueOrThrow({ where: { code: "ECARD" } });
-  try {
-    await prisma.plan.update({ where: { code: "ECARD" }, data: { priceSen: 4350 } });
-    await page.goto("/en");
-    const card = page.getByTestId("plan-card").filter({ hasText: plan.nameEn });
-    await expect(card.getByTestId("plan-price")).toHaveText("RM 43.50");
-  } finally {
-    await prisma.plan.update({ where: { code: "ECARD" }, data: { priceSen: plan.priceSen } });
+test("the English page uses English plan names and says fair use for unlimited uploads", async ({ page }) => {
+  const plans = await prisma.plan.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } });
+  await page.goto("/en");
+  const cards = page.getByTestId("plan-card");
+  await expect(cards).toHaveCount(plans.length);
+  for (const [index, plan] of plans.entries()) {
+    await expect(cards.nth(index)).toContainText(plan.nameEn);
+    if (plan.includesGallery && plan.uploadLimit === null) await expect(cards.nth(index)).toContainText("Unlimited uploads (fair use)");
+  }
+  await page.goto("/");
+  for (const [index, plan] of plans.entries()) {
+    if (plan.includesGallery && plan.uploadLimit === null) await expect(cards.nth(index)).toContainText("Muat naik tanpa had (penggunaan berpatutan)");
+  }
+});
+
+test("the guest photo strip and the venue section are marked as examples, in both languages", async ({ page }) => {
+  for (const [path, label] of [["/", "Contoh"], ["/en", "Example"]] as const) {
+    await page.goto(path);
+    const badges = page.getByTestId("sample-badge");
+    await expect(badges).toHaveCount(2);
+    for (const badge of await badges.all()) {
+      await expect(badge).toBeVisible();
+      await expect(badge).toHaveText(label);
+    }
   }
 });
 

@@ -28,8 +28,8 @@ export function MembersPanel({
   return (
     <div>
       <h2 className="font-serif text-2xl">{labels.title}</h2>
-      <p className="mt-1 text-sm text-ink/60">{labels.help}</p>
-      <ul className="mt-3 divide-y divide-ink/10 rounded-xl bg-surface" data-testid="members">
+      <p className="mt-1 text-sm text-muted">{labels.help}</p>
+      <ul className="mt-3 divide-y divide-[var(--st-line)] rounded-xl bg-surface" data-testid="members">
         {members.map((member) => (
           <li key={member.userId} className="flex items-center justify-between gap-2 p-3 text-sm">
             <span className="min-w-0 truncate">{member.email}</span>
@@ -57,7 +57,7 @@ export function MembersPanel({
             required
             placeholder={labels.email}
             aria-label={labels.email}
-            className="min-h-11 min-w-0 flex-1 rounded-full border border-ink/20 bg-surface px-4"
+            className="min-h-11 min-w-0 flex-1 rounded-full border border-[var(--st-line)] bg-[var(--st-ground-deep)] px-4"
           />
           <button type="submit" disabled={inviting} className="min-h-11 rounded-full bg-ink px-4 text-sm font-medium text-on-ink">
             {labels.invite}
@@ -69,7 +69,7 @@ export function MembersPanel({
           {labels[state.error]}
         </p>
       ) : state.saved ? (
-        <p role="status" className="mt-2 text-sm text-green-700">
+        <p role="status" className="mt-2 text-sm text-success">
           {labels.invited}
         </p>
       ) : null}

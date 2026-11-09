@@ -28,7 +28,7 @@
     "photos": {
       "joy": "Pengantin tersenyum sambil berpelukan di padang",
       "pink": "Pasangan pengantin berbaju merah jambu",
-      "mono": "Pengantin memegang jambangan bunga, hitam putih",
+      "mono": "Pengantin perempuan memegang jambangan bunga sambil bersandar pada pengantin lelaki, hitam putih",
       "outdoor": "Pengantin lelaki mendukung pengantin perempuan di luar",
       "leaves": "Pengantin berhijab putih di hadapan dedaun hijau",
       "henna": "Pengantin berhijab bermahkota dengan inai di tangan",
@@ -36,6 +36,7 @@
     },
     "strip": {
       "title": "Setiap tetamu nampak majlis anda dari sudut yang berbeza",
+      "badge": "Contoh",
       "label": "Contoh kenangan tetamu",
       "names": {
         "pink": "Farah",
@@ -78,8 +79,8 @@
     },
     "pricing": {
       "title": "Pelan dan harga",
-      "uploads": "{count} muat naik",
-      "unlimited": "Muat naik tanpa had",
+      "uploads": "{count, number} muat naik",
+      "unlimited": "Muat naik tanpa had (penggunaan berpatutan)",
       "retention": "Disimpan {days} hari",
       "gallery": "Galeri tetamu"
     },
@@ -170,6 +171,7 @@
     "itemsUnlimited": "{used} item (tanpa had)",
     "storageUsed": "{size} storan digunakan",
     "keptUntil": "Media disimpan sehingga {date}",
+    "openVenueScreen": "Buka skrin dewan",
     "noGallery": "Pelan ini tidak termasuk galeri tetamu."
   },
   "eventSettings": {

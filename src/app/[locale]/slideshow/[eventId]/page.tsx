@@ -3,7 +3,6 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Slideshow } from "@/components/slideshow/slideshow";
 import { formatEventDay } from "@/lib/dates";
 import { display, pen, ui } from "@/lib/fonts";
-import { songketVars } from "@/lib/songket";
 import type { Locale } from "@/i18n/routing";
 import { slideshowOptionsSchema } from "@/lib/schemas/slideshow";
 import { eventUrl, requireEventMember } from "@/server/events/access";
@@ -29,10 +28,7 @@ export default async function SlideshowPage({
   ]);
   const options = slideshowOptionsSchema.parse(query);
   return (
-    <div
-      className={`${display.variable} ${ui.variable} ${pen.variable}`}
-      style={songketVars(event.themeColor)}
-    >
+    <div className={`${display.variable} ${ui.variable} ${pen.variable}`}>
       <Slideshow
         eventId={event.id}
         hostNames={event.hostNames}

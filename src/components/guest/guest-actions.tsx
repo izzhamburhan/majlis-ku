@@ -97,7 +97,10 @@ export function GuestActions({
 
   // A task opened from the menu lower down the page: bring its sheet into view.
   useEffect(() => {
-    if (view === "video" || view === "voice" || view === "wish") sheetRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+    if (view !== "video" && view !== "voice" && view !== "wish") return;
+    // Reduced motion: jump, do not glide.
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    sheetRef.current?.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
   }, [view]);
   useEffect(() => () => urls.current.forEach((url) => URL.revokeObjectURL(url)), []);
 

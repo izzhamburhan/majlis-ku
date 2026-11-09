@@ -43,6 +43,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const [t, plans] = await Promise.all([getTranslations("home"), listPublicPlans()]);
   const cards = plans.map((plan) => planCard(plan, locale as Locale));
   const alt = (key: PhotoKey) => t(`photos.${key}`);
+  // The strip and the venue section show stock photos with invented guest names: say so where a sighted visitor looks.
+  const badge = (
+    <span data-testid="sample-badge" className="mb-4 inline-flex rounded-full border border-[var(--st-line)] px-3 py-1 text-sm font-semibold text-muted">
+      {t("strip.badge")}
+    </span>
+  );
 
   return (
     <StoriRoot className={`${display.variable} ${ui.variable} overflow-x-clip`}>
@@ -71,6 +77,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </section>
 
         <section className={section}>
+          <div className={gutter}>{badge}</div>
           <h2 className={`${heading} mb-10 max-w-[22em] ${gutter}`}>{t("strip.title")}</h2>
           <div role="region" tabIndex={0} aria-label={t("strip.label")} className={`st-strip flex gap-3.5 overflow-x-auto pt-3 pb-12 ${gutter}`}>
             {STRIP.map(({ key, position }) => (
@@ -123,6 +130,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
         <section className={`bg-[var(--st-ground-deep)] ${section} ${gutter}`}>
           <div>
+            {badge}
             <h2 className={heading}>{t("venue.title")}</h2>
             <p className="mt-3 mb-9 max-w-[30em] text-xl text-muted">{t("venue.body")}</p>
             <div className="flex flex-wrap overflow-hidden rounded-[1.6rem] border-[10px] border-surface bg-cream">
@@ -163,7 +171,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </div>
         </section>
 
-        <section id="harga" className={`${gutter} pb-[clamp(4rem,8vw,7rem)]`}>
+        {cards.length > 0 ? (
+        <section className={`${gutter} pb-[clamp(4rem,8vw,7rem)]`}>
           <div>
             <h2 className={`${heading} mb-8`}>{t("pricing.title")}</h2>
             <div className="flex flex-col gap-3">
@@ -194,6 +203,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             </div>
           </div>
         </section>
+        ) : null}
 
         <section className="relative isolate flex min-h-[28rem] flex-col items-center justify-center overflow-hidden px-4 py-16 text-center">
           <img

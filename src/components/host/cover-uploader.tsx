@@ -35,7 +35,7 @@ export function CoverUploader({
         <img src={coverUrl} alt="" className="mt-2 aspect-[16/9] w-full max-w-md rounded-2xl object-cover" />
       ) : null}
       <div className="mt-2 flex flex-wrap gap-2">
-        <label className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-ink/20 bg-surface px-4 text-sm font-medium">
+        <label className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-[var(--st-line)] bg-surface px-4 text-sm font-medium">
           {busy ? labels.uploading : labels.upload}
           <input
             type="file"
@@ -50,7 +50,7 @@ export function CoverUploader({
           />
         </label>
         {coverUrl ? (
-          <button type="button" disabled={busy} onClick={() => void send("DELETE")} className="min-h-11 px-3 text-sm text-ink/70 underline">
+          <button type="button" disabled={busy} onClick={() => void send("DELETE")} className="min-h-11 px-3 text-sm text-muted underline">
             {labels.remove}
           </button>
         ) : null}

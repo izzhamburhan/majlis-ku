@@ -47,12 +47,13 @@ describe("planCard", () => {
 describe("listPublicPlans", () => {
   beforeEach(() => findMany.mockReset());
 
-  it("reads active plans in sortOrder and selects only public columns", async () => {
+  it("reads active plans by sortOrder then code and selects only public columns", async () => {
     findMany.mockResolvedValue([FREE]);
     expect(await listPublicPlans()).toEqual([FREE]);
     const args = findMany.mock.calls[0]![0] as { where: unknown; orderBy: unknown; select: Record<string, boolean> };
     expect(args.where).toEqual({ active: true });
-    expect(args.orderBy).toEqual({ sortOrder: "asc" });
+    // code breaks ties, so two plans with the same sortOrder never swap places between requests.
+    expect(args.orderBy).toEqual([{ sortOrder: "asc" }, { code: "asc" }]);
     expect(Object.keys(args.select).sort()).toEqual(
       ["code", "includesEcard", "includesGallery", "nameEn", "nameMs", "priceSen", "retentionDays", "uploadLimit"],
     );

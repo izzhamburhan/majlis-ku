@@ -23,11 +23,11 @@ export type PlanCard = {
   includesEcard: boolean;
 };
 
-/** Active plans in display order, read from the database (admins edit them). Called from Server Components only. */
+/** Active plans in display order (sortOrder, then code so ties stay stable), read from the database (admins edit them). Called from Server Components only. */
 export function listPublicPlans(): Promise<PublicPlan[]> {
   return db.plan.findMany({
     where: { active: true },
-    orderBy: { sortOrder: "asc" },
+    orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
     select: {
       code: true,
       nameMs: true,

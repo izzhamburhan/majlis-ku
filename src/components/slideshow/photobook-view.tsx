@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Bunga } from "./bunga";
+import { storiVars } from "@/lib/stori";
 import type { GalleryItem } from "@/server/gallery/items";
 import { buildSpreads, composePage, nextSpread, promote, spreadKey, startBook, type BookPhoto, type BookState, type Page } from "./photobook";
 
@@ -18,7 +19,7 @@ function tilt(key: string, spread: number, salt: number): number {
   return (((h % 1000) / 1000) * 2 - 1) * spread;
 }
 
-/** Strip of songket tape holding a print or a card onto the page. */
+/** Strip of washi tape holding a print or a card onto the page. */
 function Tape({ className = "", style }: { className?: string; style?: CSSProperties }) {
   return <span aria-hidden className={`pb-tape ${className}`} style={style} />;
 }
@@ -39,11 +40,11 @@ function LeftPage({ page, caption, dateLabel, names, folio }: { page: Page; capt
       {page.frame === "monogram" ? (
         <div className="pb-gilt w-[52%]" style={{ rotate: `${tilt(page.key, 1.5, 7)}deg` }}>
           <div className="pb-mat">
-            <div className="songket flex aspect-[3/4] items-center justify-center">
+            <div className="flex aspect-[3/4] items-center justify-center bg-[var(--st-surface-lift)]">
               {names ? (
-                <span className="sk-display text-[16cqh] leading-none text-[var(--sk-gold-light)]">{page.guestName.trim().charAt(0).toUpperCase()}</span>
+                <span className="font-serif text-[16cqh] leading-none text-brand">{page.guestName.trim().charAt(0).toUpperCase()}</span>
               ) : (
-                <Bunga className="size-[45%] text-[var(--sk-gold-light)]" />
+                <Bunga className="size-[45%] text-brand" />
               )}
             </div>
           </div>
@@ -56,7 +57,7 @@ function LeftPage({ page, caption, dateLabel, names, folio }: { page: Page; capt
               <Photo photo={photo} />
             </div>
           ))}
-          <figcaption className="sk-display py-[1.8cqh] text-center text-[1.6cqh] tracking-[0.22em] text-[#5a4a3a] uppercase">{caption}</figcaption>
+          <figcaption className="py-[1.8cqh] text-center font-serif text-[1.6cqh] tracking-[0.22em] text-on-ink uppercase">{caption}</figcaption>
         </figure>
       ) : page.mount === "gilded" ? (
         <figure className={`pb-gilt ${portrait ? "w-[56%]" : "w-[74%]"}`} style={{ rotate: `${tilt(page.key, 1.2, 3)}deg` }}>
@@ -73,7 +74,7 @@ function LeftPage({ page, caption, dateLabel, names, folio }: { page: Page; capt
           <div className={`${portrait ? "aspect-[3/4]" : "aspect-[4/3]"} overflow-hidden`}>
             <Photo photo={first!} />
           </div>
-          <figcaption className="sk-pen py-[2.4cqh] text-center text-[3.8cqh] leading-none text-[#4a3b2c]">{dateLabel}</figcaption>
+          <figcaption className="pb-pen py-[2.4cqh] text-center text-[3.8cqh] leading-none text-on-ink">{dateLabel}</figcaption>
         </figure>
       )}
 
@@ -97,18 +98,18 @@ function RightPage({ page, names, from, fromAnon, dateLabel, folio }: { page: Pa
         <Tape className="-top-[2.2cqh] left-1/2 -translate-x-1/2 rotate-2" />
         {page.wish ? (
           <>
-            <p className={`sk-pen leading-[1.32] text-[var(--sk-ink)] ${wishSize(page.wish.length)}`} style={{ textWrap: "pretty" }}>
+            <p className={`pb-pen leading-[1.32] text-on-brand ${wishSize(page.wish.length)}`} style={{ textWrap: "pretty" }}>
               {page.wish}
             </p>
-            {names ? <p className="sk-pen mt-[3cqh] text-right text-[4.6cqh] leading-none text-[#5d4a38]">— {page.guestName}</p> : null}
+            {names ? <p className="pb-pen mt-[3cqh] text-right text-[4.6cqh] leading-none text-on-brand">— {page.guestName}</p> : null}
           </>
         ) : (
-          <p className="sk-pen py-[4cqh] text-center text-[5.4cqh] leading-tight text-[var(--sk-ink)]">{names ? from.replace("{name}", page.guestName) : fromAnon}</p>
+          <p className="pb-pen py-[4cqh] text-center text-[5.4cqh] leading-tight text-on-brand">{names ? from.replace("{name}", page.guestName) : fromAnon}</p>
         )}
-        {/* The cop: a gold stamp with the clove flower and the date, pressed at the corner of the card. */}
+        {/* The cop: a stamp with the clove flower and the date, pressed at the corner of the card. */}
         <div className="pb-cop absolute -right-[4cqh] -bottom-[5cqh]" aria-hidden>
-          <Bunga className="size-[5.5cqh] text-[var(--sk-gold)]" />
-          <span className="sk-display mt-[0.4cqh] text-[1.3cqh] tracking-[0.16em] uppercase">{dateLabel}</span>
+          <Bunga className="size-[5.5cqh] text-on-brand" />
+          <span className="mt-[0.4cqh] font-serif text-[1.3cqh] tracking-[0.16em] uppercase">{dateLabel}</span>
         </div>
       </div>
       <span className="pb-folio absolute bottom-[4%] left-1/2 -translate-x-1/2">{folio}</span>
@@ -244,22 +245,22 @@ export function PhotobookView({
   const before = folio(Math.max(turn - 1, 1));
 
   return (
-    <div data-testid="photobook" className="songket absolute inset-0 flex flex-col">
-      <div className="sk-band sk-band-lg shrink-0" aria-hidden />
-      <header className="flex shrink-0 items-baseline justify-between px-12 pt-5">
-        <p className="sk-display text-4xl text-[var(--sk-gold-light)]">{hostNames}</p>
-        <p className="sk-display text-xl tracking-[0.2em] text-[var(--sk-ivory)]/75 uppercase">{dateLabel}</p>
+    // The Stori scope is this root only: the other layouts, the controls and the settings dialog keep their look.
+    <div data-testid="photobook" className="stori absolute inset-0 flex flex-col bg-cream" style={storiVars()}>
+      <header className="flex shrink-0 items-baseline justify-between px-12 pt-8">
+        <p className="font-serif text-4xl text-brand">{hostNames}</p>
+        <p className="font-serif text-xl tracking-[0.2em] text-muted uppercase">{dateLabel}</p>
       </header>
 
       <div className="flex min-h-0 flex-1 items-center justify-center px-16 pt-4 pb-10">
         {current === null ? (
           <div className="flex flex-col items-center gap-8 text-center">
-            <p className="sk-display max-w-3xl text-5xl leading-tight text-[var(--sk-ivory)]">{labels.empty}</p>
+            <p className="max-w-3xl font-serif text-5xl leading-tight text-ink">{labels.empty}</p>
             <img src={qrSrc} alt={labels.qrAlt} className="size-72 rounded-xl bg-white p-3" />
-            <p className="text-2xl text-[var(--sk-ivory)]/80">{shareUrl.replace(/^https?:\/\//, "")}</p>
+            <p className="text-2xl text-muted">{shareUrl.replace(/^https?:\/\//, "")}</p>
           </div>
         ) : (
-          // The album: a songket-bound hard cover with gold corner guards, the page block on top of it.
+          // The album: a hard cover in deep dusk with peach corner guards, the page block on top of it.
           <div className="pb-cover relative aspect-[16/10.4] h-full max-h-full max-w-full">
             <span className="pb-guard top-0 left-0" />
             <span className="pb-guard top-0 right-0 rotate-90" />
@@ -310,10 +311,9 @@ export function PhotobookView({
       {current !== null ? (
         <aside className="pointer-events-none absolute right-8 bottom-12 flex w-44 flex-col items-center gap-3 text-center">
           <img src={qrSrc} alt={labels.qrAlt} className="size-36 rounded-lg bg-white p-1.5 shadow-[0_12px_24px_-8px_rgb(0_0_0/0.6)]" />
-          <p className="text-base leading-snug text-[var(--sk-ivory)]">{labels.scan}</p>
+          <p className="text-base leading-snug text-ink">{labels.scan}</p>
         </aside>
       ) : null}
-      <div className="sk-band sk-band-lg shrink-0 rotate-180" aria-hidden />
     </div>
   );
 }

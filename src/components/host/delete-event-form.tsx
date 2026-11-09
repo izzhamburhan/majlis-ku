@@ -19,7 +19,7 @@ export function DeleteEventForm({
       <p className="mt-2 text-sm text-danger">{labels.body}</p>
       <label className="mt-4 block">
         <span className="text-sm font-medium">{labels.confirmLabel}</span>
-        <input name="confirm" autoComplete="off" className="mt-1 block min-h-11 w-full rounded-xl border border-danger bg-surface px-4 font-mono" placeholder={slug} />
+        <input name="confirm" autoComplete="off" className="mt-1 block min-h-11 w-full rounded-xl border border-danger bg-[var(--st-ground-deep)] px-4 font-mono" placeholder={slug} />
       </label>
       {state.error ? (
         <p role="alert" className="mt-2 text-sm text-danger">

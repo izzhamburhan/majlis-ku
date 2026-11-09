@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { contrastRatio, STORI, storiVars } from "@/lib/stori";
 
 describe("Stori colours", () => {
-  it("ink, muted and danger reach 4.5:1 on ground and surface", () => {
-    for (const key of ["ink", "muted", "danger"] as const) {
+  it("ink, muted, danger and success reach 4.5:1 on ground and surface", () => {
+    for (const key of ["ink", "muted", "danger", "success"] as const) {
       for (const bg of ["ground", "surface"] as const) {
         expect(contrastRatio(STORI[key], STORI[bg]), `${key} on ${bg}`).toBeGreaterThanOrEqual(4.5);
       }
@@ -33,6 +33,7 @@ describe("Stori colours", () => {
       "--color-on-brand": STORI.onBrand,
       "--color-on-ink": STORI.onInk,
       "--color-danger": STORI.danger,
+      "--color-success": STORI.success,
     });
     for (const value of Object.values(vars)) expect(value).toMatch(/^#[0-9A-F]{6}$/);
   });

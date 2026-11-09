@@ -2,10 +2,12 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EventForm } from "@/components/host/event-form";
 import { eventFormLabels } from "@/components/host/labels";
 import { SiteHeader } from "@/components/site-header";
+import { StoriRoot } from "@/components/stori-root";
 import { Link } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 import { BRAND_COLOR } from "@/lib/brand";
 import { utcToKlLocal } from "@/lib/dates";
+import { display, ui } from "@/lib/fonts";
 import { requireUser } from "@/server/auth/session";
 import { createEventAction } from "@/server/events/actions";
 
@@ -17,10 +19,10 @@ export default async function NewEventPage({ params }: { params: Promise<{ local
   // Default: four weeks from now at 11:00 Malaysia time.
   const inFourWeeks = utcToKlLocal(new Date(Date.now() + 28 * 24 * 60 * 60 * 1000)).slice(0, 10);
   return (
-    <>
+    <StoriRoot className={`${display.variable} ${ui.variable}`}>
       <SiteHeader />
       <main className="mx-auto max-w-xl px-4 py-6">
-        <Link href="/dashboard" className="inline-flex min-h-11 items-center text-sm text-ink/70 underline">
+        <Link href="/dashboard" className="inline-flex min-h-11 items-center text-sm text-muted underline">
           ← {tc("back")}
         </Link>
         <h1 className="mt-2 mb-6 font-serif text-3xl">{t("newTitle")}</h1>
@@ -41,6 +43,6 @@ export default async function NewEventPage({ params }: { params: Promise<{ local
           }}
         />
       </main>
-    </>
+    </StoriRoot>
   );
 }

@@ -19,6 +19,7 @@ const STORI_SOURCES = [
   "src/components/guest/voice-recorder.tsx",
   "src/components/locale-toggle.tsx",
   "src/app/[locale]/dashboard",
+  "src/app/[locale]/page.tsx",
   "src/app/[locale]/[slug]/page.tsx",
   "src/app/[locale]/[slug]/gallery/page.tsx",
   "src/app/[locale]/[slug]/report/page.tsx",
@@ -31,10 +32,14 @@ const GUEST_SOURCES = [
   "src/components/guest/guest-ui.tsx",
   "src/components/guest/video-picker.tsx",
   "src/components/guest/voice-recorder.tsx",
+  "src/app/[locale]/page.tsx",
   "src/app/[locale]/[slug]/page.tsx",
   "src/app/[locale]/[slug]/gallery/page.tsx",
   "src/app/[locale]/[slug]/report/page.tsx",
 ];
+
+// Host pages: nothing outside the Stori theme shares them, so they can use the Stori line colour directly.
+const HOST_SOURCES = ["src/components/host", "src/app/[locale]/dashboard"];
 
 function filesIn(path: string): string[] {
   const full = join(root, path);
@@ -69,6 +74,16 @@ describe("Stori source scan", () => {
   it("Stori components use no hard-coded light theme classes", () => {
     const light = /\b(?:bg-white|text-white|(?:text|bg|border|ring|divide)-red-\d{2,3})\b/;
     expect(offending(STORI_SOURCES, light)).toEqual([]);
+  });
+
+  it("Stori components use the success token, not green or amber light panels", () => {
+    // Green text and bg-green-50 panels are the success token; amber banners and chips are bg-surface.
+    const lights = /\b(?:text|bg|border|ring|divide)-(?:green|amber)-\d{2,3}\b/;
+    expect(offending(STORI_SOURCES, lights)).toEqual([]);
+  });
+
+  it("host pages use the muted token and the Stori line, not ink opacity modifiers", () => {
+    expect(offending(HOST_SOURCES, /\b(?:text|border|divide|bg)-ink\/\d+/)).toEqual([]);
   });
 
   it("guest-facing components use no ink opacity modifiers", () => {

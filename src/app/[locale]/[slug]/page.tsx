@@ -54,9 +54,9 @@ export default async function GuestEventPage({ params }: { params: Promise<{ loc
     // The bottom padding keeps the report link and footer clear of the floating dock.
     <StoriRoot className={`${display.variable} ${ui.variable} ${hasDock ? "pb-[calc(6.5rem+env(safe-area-inset-bottom))]" : ""}`}>
       <div className="mx-auto flex w-full max-w-lg flex-col">
-        <section className="relative flex min-h-svh flex-col">
+        <section className="st-screen-min relative flex flex-col">
           {/* The cover fills the first screen. Without one (or before the PIN), the dusk ground carries the monogram. */}
-          <div aria-hidden className="absolute inset-x-0 top-0 h-svh overflow-hidden bg-[var(--st-ground-deep)]">
+          <div aria-hidden className="st-screen absolute inset-x-0 top-0 overflow-hidden bg-[var(--st-ground-deep)]">
             {coverUrl ? (
               <img src={coverUrl} alt="" fetchPriority="high" decoding="async" className="h-full w-full object-cover" />
             ) : (

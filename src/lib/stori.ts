@@ -16,6 +16,7 @@ export const STORI = {
   onBrand: "#251D2A",
   onInk: "#251D2A",
   danger: "#FFB4A8",
+  success: "#A8E0B8",
 } as const;
 
 export type StoriToken = keyof typeof STORI;
@@ -36,6 +37,7 @@ export function storiVars(): CSSProperties {
     "--color-on-brand": STORI.onBrand,
     "--color-on-ink": STORI.onInk,
     "--color-danger": STORI.danger,
+    "--color-success": STORI.success,
   };
   return vars as CSSProperties;
 }
