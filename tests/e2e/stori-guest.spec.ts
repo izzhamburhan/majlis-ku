@@ -11,6 +11,12 @@ let shotsSlug = "";
 
 const PIN = "2468";
 
+// These tests join as a guest many times. Every e2e run shares one client IP, so clear the
+// per-IP join limit here to keep this file from using up the allowance of the other specs.
+test.beforeEach(async () => {
+  await prisma.rateLimit.deleteMany({ where: { key: { startsWith: "guestJoin:" } } });
+});
+
 test.afterAll(async () => {
   await prisma.$disconnect();
 });
