@@ -9,6 +9,12 @@ const state = vi.hoisted(() => ({
   opened: [] as string[],
   open: 0,
   maxOpen: 0,
+  streams: [] as import("node:stream").Readable[],
+  /** Keys that disappear after stat: stat answers once, then null, and opening them fails. */
+  vanishing: new Set<string>(),
+  statted: new Set<string>(),
+  /** When set, every object stream waits this long between chunks and has many chunks. */
+  slow: false,
 }));
 
 vi.mock("@/server/db", () => ({
@@ -21,20 +27,27 @@ vi.mock("@/server/db", () => ({
 // Only the StorageDriver interface is offered here: the export must not reach for file paths.
 vi.mock("@/server/media/storage", () => ({
   storage: () => ({
-    stat: async () => ({ size: 9 }),
+    stat: async (key: string) => {
+      if (state.vanishing.has(key) && state.statted.has(key)) return null;
+      state.statted.add(key);
+      return { size: 9 };
+    },
     getObjectStream: async (key: string) => {
+      if (state.vanishing.has(key)) throw Object.assign(new Error("no such object"), { code: "ENOENT" });
       state.opened.push(key);
       state.open += 1;
       state.maxOpen = Math.max(state.maxOpen, state.open);
+      const parts = state.slow ? Array.from({ length: 200 }, () => "abc") : ["abc", "def", "ghi"];
       const stream = Readable.from(
         (async function* () {
-          for (const part of ["abc", "def", "ghi"]) {
-            await new Promise((resolve) => setTimeout(resolve, 2));
+          for (const part of parts) {
+            await new Promise((resolve) => setTimeout(resolve, state.slow ? 20 : 2));
             yield Buffer.from(part);
           }
         })(),
       );
       stream.on("end", () => (state.open -= 1));
+      state.streams.push(stream);
       return stream;
     },
   }),
@@ -59,6 +72,10 @@ beforeEach(() => {
   state.opened = [];
   state.open = 0;
   state.maxOpen = 0;
+  state.streams = [];
+  state.vanishing = new Set();
+  state.statted = new Set();
+  state.slow = false;
   state.uploads = [1, 2, 3].map((n) => ({
     id: `up${n}`,
     kind: "PHOTO" as const,
@@ -80,5 +97,33 @@ describe("eventZipStream", () => {
     expect(text).toContain("ucapan.pdf");
     expect(text).toContain("ucapan.csv");
     expect(text).toContain("abcdefghi");
+  });
+
+  it("cancelling the ZIP stream closes the open object stream and stops opening more", async () => {
+    state.slow = true;
+    const reader = (await eventZipStream(event, "ms")).getReader();
+    await reader.read(); // the first entry is now open and flowing
+    expect(state.streams).toHaveLength(1);
+
+    await reader.cancel(); // the download was abandoned
+
+    await vi.waitFor(() => expect(state.streams[0]?.destroyed).toBe(true), { timeout: 1000 });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(state.opened).toEqual(["events/ev1/up1/original"]);
+  });
+
+  it("a missing object mid export is skipped", async () => {
+    state.vanishing.add("events/ev1/up2/original");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    const text = (await readAll(await eventZipStream(event, "ms"))).toString("latin1");
+
+    expect(state.opened).toEqual(["events/ev1/up1/original", "events/ev1/up3/original"]);
+    expect(text).toContain("gambar/Tetamu 1-up1.jpg");
+    expect(text).not.toContain("Tetamu 2-up2");
+    expect(text).toContain("gambar/Tetamu 3-up3.jpg");
+    expect(text).toContain("ucapan.csv");
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { copyFile, mkdir, open, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve, sep } from "node:path";
@@ -95,7 +96,7 @@ export class LocalStorageDriver implements StorageDriver {
   /** Copy to a temporary name and rename, so a reader never sees a half-written object. */
   private async copyInto(source: string, target: string): Promise<void> {
     await mkdir(dirname(target), { recursive: true });
-    const temp = `${target}.part-${process.pid}-${Date.now()}`;
+    const temp = `${target}.part-${process.pid}-${Date.now()}-${randomUUID()}`;
     try {
       await copyFile(source, temp);
       await rename(temp, target);
@@ -117,7 +118,12 @@ export class LocalStorageDriver implements StorageDriver {
   async deletePrefix(prefix: string): Promise<void> {
     const path = this.pathFor(prefix.replace(/\/+$/, ""));
     // The prefix is a folder: a file that happens to share its name is not part of it (same as S3 with a trailing slash).
-    const info = await stat(path).catch(() => null);
+    // Only "nothing there" means nothing to delete; a permission or disk error must not look like a finished delete.
+    const info = await stat(path).catch((error: unknown) => {
+      const code = (error as { code?: string } | null)?.code;
+      if (code === "ENOENT" || code === "ENOTDIR") return null;
+      throw error;
+    });
     if (!info?.isDirectory()) return;
     await rm(path, { recursive: true, force: true });
   }

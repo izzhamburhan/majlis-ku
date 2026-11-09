@@ -57,6 +57,23 @@ describe("sweepStalePending", () => {
   });
 });
 
+describe("stray incoming objects", () => {
+  it("sweep removes a stray incoming object of a READY upload created 90 minutes ago and keeps original", async () => {
+    // The signed URL outlived the completion, so the guest could write a new `incoming` after it was deleted.
+    const done = await addUpload(90, "READY");
+    const recent = await addUpload(30, "READY"); // its URL may still be valid
+    const old = await addUpload(180, "READY"); // already past the window
+
+    expect(await sweepStalePending(now)).toBe(0);
+
+    expect(await fakeStorage.driver.stat(`${done.base}/incoming`)).toBeNull();
+    expect(await fakeStorage.driver.stat(`${done.base}/original`)).not.toBeNull();
+    expect(fakeState.uploads.find((u) => u.id === done.row.id)?.status).toBe("READY");
+    expect(await fakeStorage.driver.stat(`${recent.base}/incoming`)).not.toBeNull();
+    expect(await fakeStorage.driver.stat(`${old.base}/incoming`)).not.toBeNull();
+  });
+});
+
 describe("runPurgeOnce", () => {
   it("runs the purge and the pending sweep together and reports both", async () => {
     await addUpload(120);

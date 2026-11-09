@@ -37,18 +37,24 @@ export async function eventZipStream(event: Event, locale: AppLocale): Promise<R
   archive.on("warning", (error) => console.warn("[export] zip warning", error.message));
   archive.on("error", (error) => console.error("[export] zip error", error));
 
-  /** Add one entry and wait until the archive has taken all of it. False when the archive failed meanwhile. */
+  /**
+   * Add one entry and wait until the archive has taken all of it. False when the archive failed or was closed
+   * meanwhile (a cancelled download destroys it without an `entry` or `error`); the source stream is then closed too.
+   */
   const append = (source: Readable | Buffer | string, data: { name: string; date?: Date }) =>
     new Promise<boolean>((resolve) => {
       const onEntry = () => finish(true);
-      const onError = () => finish(false);
+      const onStop = () => finish(false);
       const finish = (ok: boolean) => {
         archive.off("entry", onEntry);
-        archive.off("error", onError);
+        archive.off("error", onStop);
+        archive.off("close", onStop);
+        if (!ok && source instanceof Readable) source.destroy();
         resolve(ok);
       };
       archive.once("entry", onEntry);
-      archive.once("error", onError);
+      archive.once("error", onStop);
+      archive.once("close", onStop);
       archive.append(source, data);
     });
 
@@ -56,10 +62,21 @@ export async function eventZipStream(event: Event, locale: AppLocale): Promise<R
   const used = new Set<string>();
   void (async () => {
     for (const upload of uploads) {
+      if (archive.destroyed) return;
       if (!(await store.stat(upload.objectKey))) continue;
-      const stream = await store.getObjectStream(upload.objectKey);
+      let stream: Readable;
+      try {
+        stream = await store.getObjectStream(upload.objectKey);
+      } catch (error) {
+        // Gone between the check and the open (a purge, or a delete from the dashboard): skip it like any missing file.
+        if (await store.stat(upload.objectKey)) throw error;
+        console.warn(`[export] upload ${upload.id} vanished during the export; skipped`);
+        continue;
+      }
+      if (archive.destroyed) return void stream.destroy(); // cancelled while the object was opening
       if (!(await append(stream, { name: zipEntryName(upload, used), date: upload.createdAt }))) return archive.destroy();
     }
+    if (archive.destroyed) return;
     if (!(await append(pdf, { name: "ucapan.pdf" }))) return archive.destroy();
     if (!(await append(wishesCsv(wishes), { name: "ucapan.csv" }))) return archive.destroy();
     await archive.finalize();

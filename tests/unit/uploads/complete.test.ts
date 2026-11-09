@@ -1,7 +1,7 @@
 import type { UploadKind } from "@prisma/client";
 import sharp from "sharp";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { fakeState, resetFakeDb, type FakeEvent } from "../support/fake-db";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { fakeDb, fakeState, resetFakeDb, type FakeEvent } from "../support/fake-db";
 import { fakeStorage, setUpFakeStorage, tearDownFakeStorage } from "../support/fake-storage";
 
 vi.mock("server-only", () => ({}));
@@ -28,6 +28,7 @@ beforeAll(async () => {
   jpeg = await sharp({ create: { width: 64, height: 48, channels: 3, background: "#b33" } }).jpeg().toBuffer();
 });
 afterAll(tearDownFakeStorage);
+afterEach(() => vi.restoreAllMocks());
 beforeEach(() => {
   event = resetFakeDb();
   testEnv.cap = undefined;
@@ -167,5 +168,80 @@ describe("completeUpload", () => {
     testEnv.cap = jpeg.length - 1;
     await put(incoming, jpeg);
     await expectRejectedAndDeleted(uploadId, "too_large", 413, [incoming, original]);
+  });
+
+  it("a second complete for the same upload does not count it twice", async () => {
+    const { uploadId, incoming } = await start(jpeg);
+    await put(incoming, jpeg);
+    const stale = { ...fakeState.uploads[0]! }; // what a double submit read before the first call finished
+    expect(await complete(uploadId)).toEqual({ status: "READY" });
+
+    vi.spyOn(fakeDb.upload, "findFirst").mockResolvedValueOnce(stale);
+    expect(await complete(uploadId)).toEqual({ status: "READY" });
+
+    expect(event.uploadCount).toBe(1);
+    expect(event.storageBytes).toBe(BigInt(jpeg.length));
+  });
+
+  it("complete after the sweep marked it FAILED stays FAILED", async () => {
+    const { uploadId, incoming, original } = await start(jpeg);
+    await put(incoming, jpeg);
+    // The sweep runs while this call is making the web copies: it has already read the row as PENDING.
+    const realPut = fakeStorage.driver.putObject.bind(fakeStorage.driver);
+    vi.spyOn(fakeStorage.driver, "putObject").mockImplementation(async (key, body, type) => {
+      if (key.endsWith("display.jpg")) fakeState.uploads[0]!.status = "FAILED";
+      return realPut(key, body, type);
+    });
+
+    await expect(complete(uploadId)).rejects.toMatchObject({ code: "invalid_file", status: 422 });
+
+    expect(fakeState.uploads[0]?.status).toBe("FAILED");
+    expect(event.uploadCount).toBe(0);
+    expect(event.storageBytes).toBe(0n);
+    // Whatever this call wrote after the sweep deleted the files goes too.
+    expect(await fakeStorage.driver.stat(original)).toBeNull();
+    expect(await fakeStorage.driver.stat(`events/${event.id}/${uploadId}/display.jpg`)).toBeNull();
+  });
+
+  it("two completes near the limit: only one fits", async () => {
+    event.plan.storageLimitBytes = BigInt(jpeg.length + 10); // room for one file, not two
+    const first = await start(jpeg);
+    const second = await start(jpeg);
+    await put(first.incoming, jpeg);
+    await put(second.incoming, jpeg);
+
+    // Both read the event before either finished, so both pass the early check; only the counting step can decide.
+    const results = await Promise.allSettled([complete(first.uploadId), complete(second.uploadId)]);
+
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    const rejected = results.find((r): r is PromiseRejectedResult => r.status === "rejected");
+    expect(rejected?.reason).toMatchObject({ code: "storage_full", status: 409 });
+    expect(event.uploadCount).toBe(1);
+    expect(event.storageBytes).toBe(BigInt(jpeg.length));
+
+    const [loser, winner] = results[0]?.status === "rejected" ? [first, second] : [second, first];
+    const loserRow = fakeState.uploads.find((u) => u.id === loser.uploadId)!;
+    expect(loserRow.status).toBe("FAILED");
+    expect(loserRow.displayKey).toBeNull(); // the claim was rolled back, not kept
+    expect(await fakeStorage.driver.stat(loser.original)).toBeNull();
+    expect(fakeState.uploads.find((u) => u.id === winner.uploadId)?.status).toBe("READY");
+    expect(await fakeStorage.driver.stat(winner.original)).not.toBeNull();
+  });
+
+  it("a copy that was made but whose incoming delete failed completes on retry without counting twice", async () => {
+    const { uploadId, incoming, original } = await start(jpeg);
+    await put(incoming, jpeg);
+    vi.spyOn(fakeStorage.driver, "deleteObject").mockRejectedValueOnce(new Error("storage unavailable"));
+
+    await expect(complete(uploadId)).rejects.toThrow("storage unavailable");
+    expect(await fakeStorage.driver.stat(original)).not.toBeNull();
+    expect(fakeState.uploads[0]?.status).toBe("PENDING");
+    expect(event.uploadCount).toBe(0);
+
+    expect(await complete(uploadId)).toEqual({ status: "READY" });
+    expect(await complete(uploadId)).toEqual({ status: "READY" });
+    expect(await fakeStorage.driver.stat(incoming)).toBeNull();
+    expect(event.uploadCount).toBe(1);
+    expect(event.storageBytes).toBe(BigInt(jpeg.length));
   });
 });

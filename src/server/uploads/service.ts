@@ -79,9 +79,16 @@ export async function startUpload({
   return { uploadId: upload.id, ...target };
 }
 
+/** Thrown inside the finishing transaction to roll it back when the plan has no room left. */
+class StorageFull extends Error {}
+
+/**
+ * Mark a PENDING upload FAILED and delete its files. An upload that another call already finished (or the sweep
+ * already failed) is left alone: its files are not ours to delete.
+ */
 async function fail(upload: Upload, code: string, status = 422): Promise<never> {
-  await db.upload.update({ where: { id: upload.id }, data: { status: "FAILED" } });
-  await storage().deletePrefix(`events/${upload.eventId}/${upload.id}`);
+  const claimed = await db.upload.updateMany({ where: { id: upload.id, status: "PENDING" }, data: { status: "FAILED" } });
+  if (claimed.count === 1) await storage().deletePrefix(`events/${upload.eventId}/${upload.id}`);
   throw new ApiError(code, status);
 }
 
@@ -125,11 +132,7 @@ export async function completeUpload({ eventId, uploadId, guestId }: { eventId: 
   // Disposable-camera mode: the limit holds at completion too, so uploads started in parallel cannot all get through.
   if (upload.kind === "PHOTO" && upload.guestId) {
     const shot = checkShotAllowed(event.shotsPerGuest, await guestShotsUsed(db, eventId, upload.guestId));
-    if (!shot.ok) {
-      await db.upload.update({ where: { id: upload.id }, data: { status: "FAILED" } });
-      await store.deletePrefix(`events/${upload.eventId}/${upload.id}`);
-      throw new ApiError(shot.code, 409);
-    }
+    if (!shot.ok) return fail(upload, shot.code, 409);
   }
 
   let data: Partial<Upload> = {};
@@ -148,13 +151,41 @@ export async function completeUpload({ eventId, uploadId, guestId }: { eventId: 
 
   // Photos are ready now; video and voice are converted in the background (see processing.ts).
   // Either way the item counts against the plan from this moment, so parallel uploads cannot overshoot it.
+  // The checks above read the event before this call finished; what decides is the claim below: only the call
+  // that moves the row out of PENDING counts it, and the storage limit is tested in the same statement that adds the bytes.
   const size = BigInt(info.size);
   const status = upload.kind === "PHOTO" ? ("READY" as const) : ("PROCESSING" as const);
   const mimeType = upload.kind === "PHOTO" && detected ? detected : baseMime(upload.mimeType);
-  await db.$transaction([
-    db.upload.update({ where: { id: upload.id }, data: { ...data, status, mimeType, sizeBytes: size } }),
-    db.event.update({ where: { id: eventId }, data: { uploadCount: { increment: 1 }, storageBytes: { increment: size } } }),
-  ]);
+  const storageLimit = event.plan.storageLimitBytes;
+  let claimed: boolean;
+  try {
+    claimed = await db.$transaction(async (tx) => {
+      const row = await tx.upload.updateMany({
+        where: { id: upload.id, status: "PENDING" },
+        data: { ...data, status, mimeType, sizeBytes: size },
+      });
+      if (row.count === 0) return false;
+      const counted = await tx.event.updateMany({
+        where: { id: eventId, ...(storageLimit === null ? {} : { storageBytes: { lte: storageLimit - size } }) },
+        data: { uploadCount: { increment: 1 }, storageBytes: { increment: size } },
+      });
+      if (counted.count === 0) throw new StorageFull();
+      return true;
+    });
+  } catch (error) {
+    if (error instanceof StorageFull) return fail(upload, "storage_full", 409);
+    throw error;
+  }
+  if (!claimed) {
+    // A parallel call finished it, or the sweep failed it while this one worked.
+    const current = await db.upload.findUnique({ where: { id: upload.id } });
+    if (!current) throw new ApiError("not_found", 404);
+    if (current.status === "FAILED") {
+      await store.deletePrefix(`events/${upload.eventId}/${upload.id}`); // what this call wrote after the sweep
+      throw new ApiError("invalid_file", 422);
+    }
+    return { status: current.status };
+  }
   if (status === "READY") await publishUpload(upload.id);
   else void enqueueProcessing(upload);
   return { status };

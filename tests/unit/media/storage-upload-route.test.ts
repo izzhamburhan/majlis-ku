@@ -33,4 +33,44 @@ describe("PUT /api/storage/upload (local driver)", () => {
       expect(await fakeStorage.driver.stat(key)).toBeNull();
     },
   );
+
+  const send = (path: string) =>
+    PUT(new Request(`http://localhost${path}`, { method: "PUT", body: "file bytes", headers: { "content-length": "10" } }));
+
+  it("refuses an expired signed URL and writes nothing", async () => {
+    const key = "events/ev1/up3/incoming";
+    const path = signStorageUrl({ action: "put", key, expiresInSec: 60, maxBytes: 1000, secret: SECRET, now: new Date(Date.now() - 120_000) });
+
+    const response = await send(path);
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).error.code).toBe("expired");
+    expect(await fakeStorage.driver.stat(key)).toBeNull();
+  });
+
+  it.each([
+    ["the key", (u: URL) => u.searchParams.set("key", "events/ev1/other/incoming")],
+    ["the size limit", (u: URL) => u.searchParams.set("max", "999999")],
+    ["the expiry", (u: URL) => u.searchParams.set("exp", String(Math.floor(Date.now() / 1000) + 86_400))],
+    ["the signature", (u: URL) => u.searchParams.set("sig", "x".repeat(43))],
+  ])("refuses a signed URL whose %s was changed, and writes nothing", async (_what, tamper) => {
+    const key = "events/ev1/up4/incoming";
+    const url = new URL(`http://localhost${signStorageUrl({ action: "put", key, expiresInSec: 60, maxBytes: 1000, secret: SECRET })}`);
+    tamper(url);
+
+    const response = await send(url.pathname + url.search);
+
+    expect(response.status).toBe(403);
+    expect((await response.json()).error.code).toBe("bad_signature");
+    expect(await fakeStorage.driver.stat(key)).toBeNull();
+    expect(await fakeStorage.driver.stat("events/ev1/other/incoming")).toBeNull();
+  });
+
+  it("refuses a URL signed for reading when it is used to write", async () => {
+    const key = "events/ev1/up5/incoming";
+    const path = signStorageUrl({ action: "get", key, expiresInSec: 60, secret: SECRET }).replace("/api/storage/file", "/api/storage/upload");
+    const response = await send(path + "&max=1000");
+    expect(response.status).toBe(403);
+    expect(await fakeStorage.driver.stat(key)).toBeNull();
+  });
 });
