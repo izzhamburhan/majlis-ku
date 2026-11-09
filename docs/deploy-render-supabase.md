@@ -31,7 +31,7 @@ This is fine for a demo and for trying the app on your own phone. It is not for 
 2. Open **Connect** (top of the project page) and choose the **Session pooler** connection string. It looks like `postgresql://postgres.<project-ref>:<password>@<host>:5432/postgres`. Copy the exact string from the dashboard; do not retype it. Replace `[YOUR-PASSWORD]` with your database password. If the password has characters such as `@`, `#` or `/`, replace each with its percent code (for example `@` becomes `%40`), or reset the password to letters and digits only.
 3. Add `?connection_limit=5&sslmode=require` to the end. The result is your `DATABASE_URL`. Use this one address for both migrations and the running app. Keep it secret.
 4. Open **Storage**, **New bucket**, name it exactly `majlisku-media`, and leave **Public bucket** off. The bucket must stay private: the app hands out short-lived signed links.
-5. In Storage settings (the bucket's settings or **Storage > Settings**, depending on the dashboard version), set the **file size limit** to 50 MB. This is the second layer behind the app's own `S3_MAX_OBJECT_BYTES=52428800`.
+5. In Storage settings (the bucket's settings or **Storage > Settings**, depending on the dashboard version), set the **file size limit** to 50 MB. This is the second layer behind the app's own `S3_MAX_OBJECT_BYTES=50000000`.
 6. Open **Storage > S3 connection** (the name may differ slightly: check on the vendor's page). Turn the S3 protocol **on**. Copy the **endpoint** (it looks like `https://<project-ref>.storage.supabase.co/storage/v1/s3`) and the **region** shown there (for example `ap-southeast-1`). Choose **New access key**, copy the **access key ID** and the **secret access key** at once; the secret is shown only one time.
 
 You now hold five storage values and one database address:
@@ -51,9 +51,9 @@ You need the service's public address for Google, and Google's keys for Render, 
 
 1. Push this branch (or `main`, once merged) to GitHub. `render.yaml` must be in the repository root of the branch you deploy.
 2. In Render: **New > Blueprint**, connect your GitHub account, pick this repository and branch. Render reads `render.yaml` and shows one web service named `majlis-ku` and the variables to fill in (section 5).
-3. Fill what you already have (the Supabase values) and put a guess for the address (see `AUTH_URL` below). You can change any value later; each change redeploys.
+3. Fill what you already have (the Supabase values) and put a guess for the address (see `AUTH_URL` below). You can change any value later; each change redeploys. **Expect the first deploy to fail.** The app refuses to start until the Google keys (section 4) and the generated secrets (section 5) are set, and the Render **Logs** list each missing or unsafe variable by name. That is the safety check working, not a bug: set the values in section 5 and the service redeploys.
 4. Apply. The first build takes several minutes: it installs packages, downloads the ffmpeg binary and builds Next.js.
-5. When the service exists, copy its real address from the dashboard (like `https://majlis-ku.onrender.com`; Render adds letters if the name was taken). If it differs from your guess, correct `AUTH_URL` and `NEXT_PUBLIC_APP_URL` (section 5).
+5. When the service exists, copy its real address from the dashboard (like `https://majlis-ku.onrender.com`; Render may add letters if the name was taken, **check on the vendor's page**). If it differs from your guess, correct `AUTH_URL` and `NEXT_PUBLIC_APP_URL` (section 5).
 
 ## 4. Google sign-in
 
@@ -67,7 +67,7 @@ The app accepts a Google sign-in only when Google reports the email as verified.
 
 ## 5. Render: the variables
 
-Fixed in `render.yaml`, do not touch: `DEPLOYED=1`, `STORAGE_DRIVER=s3`, `S3_MAX_OBJECT_BYTES=52428800`. `NODE_ENV` comes from the image.
+Fixed in `render.yaml`, do not touch: `DEPLOYED=1`, `STORAGE_DRIVER=s3`, `S3_MAX_OBJECT_BYTES=50000000`. `NODE_ENV` comes from the image.
 
 Generate the three random values on your own computer (needs only Node.js), one command each, and paste the printed text into Render. Never paste them into a chat, an issue or a file in the repo.
 
@@ -86,26 +86,28 @@ node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"      # 
 | `NEXT_PUBLIC_APP_URL` | The same address as `AUTH_URL`. Used in QR codes, share links and previews. Read when the server starts, so changing it only needs a redeploy. |
 | `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` | Section 4. |
 | `ADMIN_EMAILS` | Comma-separated Google addresses that become admins when they sign in, for example `you@gmail.com`. Checked on every request, so removing an address removes the access. Required. |
-| `TRUSTED_PROXY_HOPS` | How many proxies sit between the internet and the app. The app takes the visitor's address from the `x-forwarded-for` header counting that many entries from the right. Start with `1` (the one Render proxy in front). See the check below. |
+| `TRUSTED_PROXY_HOPS` | How many proxies sit between the internet and the app. The app takes the visitor's address from the `x-forwarded-for` header counting that many entries from the right. Set `1` first, then measure the real number with `LOG_PROXY_HOPS` (see "Setting `TRUSTED_PROXY_HOPS`" below). Must be 1 or more. |
 | `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Section 2. |
+| `LOG_PROXY_HOPS` | Optional, only while measuring `TRUSTED_PROXY_HOPS`: `1` logs the number of `x-forwarded-for` entries (never an address) for the first 20 guest requests after start. Leave it unset otherwise. |
 | `CRON_SECRET` | Random, 16 or more characters. Lets a scheduler call `POST /api/cron/purge` with the header `Authorization: Bearer <CRON_SECRET>`. Without it that route answers 404. |
 
-If a value is missing or unsafe, the app refuses to start and prints one line per problem in the Render **Logs** (names only, never values), for example `TRUSTED_PROXY_HOPS: must be a whole number of 0 or more`. Fix the named variable and save.
+If a value is missing or unsafe, the app refuses to start and prints one line per problem in the Render **Logs** (names only, never values), for example `TRUSTED_PROXY_HOPS: must be a whole number of 1 or more`. Fix the named variable and save.
 
-### Checking `TRUSTED_PROXY_HOPS`
+### Setting `TRUSTED_PROXY_HOPS`
 
-This number decides which address counts as "the visitor" for the per-IP limits. Too low and every guest shares one address, so a few wrong PIN attempts lock everyone out. Too high and a visitor can invent their own address and dodge the limits. The repo has no safe way to print the header length without logging addresses, so check it by behaviour with two phones on different networks (one on Wi-Fi, one on mobile data):
+This number decides which address counts as "the visitor" for the per-IP limits. Too low and every guest shares one address, so a few wrong PIN attempts lock everyone out. Too high and a visitor can invent their own address and dodge the limits. How many proxies Render puts in front of your service is a fact about Render (**check on Render's page**), so do not assume it: measure it, once, with a diagnostic that logs only counts and never an address.
 
-1. Sign in, create an event, and give it a PIN in the event settings.
-2. Open the guest page on **phone A**. Enter wrong PINs. Each device is allowed 5 wrong PINs per 10 minutes, so after 5 clear the site data for the page (or use a private tab) and repeat until 20 wrong PINs were entered from phone A's network. The next attempt shows the locked message.
-3. On **phone B** (other network) open the same guest page and enter the **correct** PIN. It must work.
-
-If phone B is locked too, the app sees the same address for both: raise `TRUSTED_PROXY_HOPS` only if Render documents more than one proxy in front of your service (**check on the vendor's page**), otherwise report it. If phone B works, `1` is right. The lock lasts 10 minutes. Do not add temporary logging of `x-forwarded-for`: it contains real IP addresses, and the project's rule is not to store or log them.
+1. Set `TRUSTED_PROXY_HOPS=1` first. The app refuses to start with a value below 1.
+2. Add the variable `LOG_PROXY_HOPS=1` and save; Render redeploys. For the first 20 guest requests after each start the app logs one line such as `[proxy-hops] entries=2 x-real-ip=absent`: how many entries the `x-forwarded-for` header has and whether `x-real-ip` is present. It never logs an address. (It does nothing unless `DEPLOYED=1`.)
+3. Open the site's guest page from a **phone on mobile data**, not your Wi-Fi, a few times.
+4. In the Render **Logs** read the `[proxy-hops]` lines. Compare the entry count with the number of proxies you expect in front of the service. Your phone sends no `x-forwarded-for` of its own, so each entry was added by one proxy: the count is the value to use. If the lines disagree with each other, or the count is 0, stop and report it instead of guessing.
+5. Set `TRUSTED_PROXY_HOPS` to that count, remove `LOG_PROXY_HOPS` (or set it to `0`), and save so Render redeploys. The app never reads `x-real-ip` when deployed.
+6. Confirm with two phones on different networks (one on Wi-Fi, one on mobile data). Give an event a PIN in its settings. On **phone A** enter wrong PINs until the locked message appears (each device may try 5 wrong PINs per 10 minutes, so clear the site data or use a private tab after every 5, up to 20 wrong PINs from the same network). On **phone B** open the same guest page and enter the **correct** PIN. It must work. If phone B is locked too, the app sees one address for both: go back to step 2 and report what the lines say. The lock lasts 10 minutes.
 
 ## 6. First deploy: what to expect
 
 - Every start runs, in order: `prisma migrate deploy` (creates the tables), `npm run db:seed:prod` (plans and e-card templates only; no demo data and no users), then the server. You never run these by hand.
-- Render waits for `/api/health` to answer 200 before it sends traffic. It answers 503 when the database cannot be reached.
+- Render is set to wait for `/api/health` to answer 200 before it sends traffic (**check on the vendor's page** how it gates a deploy). The route answers 503 when the database cannot be reached.
 - After 15 minutes without traffic the service sleeps. The next request wakes it; expect about a minute of waiting, and the first guest scan after a quiet period will be slow.
 - Open `https://<your-render-address>/signin`. Only the Google button should show.
 
@@ -116,7 +118,7 @@ Do these on a laptop and on a phone, and write down what you see. Tick each only
 1. Sign in with Google (the address you put in `ADMIN_EMAILS` also reaches `/admin`).
 2. Create an event.
 3. On a phone, open the event's guest page (scan the QR code from the event page) and upload one photo and one video. **Time the video upload** from tapping upload to seeing it in the gallery, and write the number down.
-4. While uploading, open the browser's developer tools **Network** tab (on a laptop upload, or by remote debugging) and look at the upload request: its host must be the Supabase storage host (`<project-ref>.storage.supabase.co`), not the `onrender.com` address. Note any red CORS error in the console. Supabase has no setting for bucket CORS, so if the browser blocks the upload request, **stop here and report it**; the fix is a code change that is not part of this guide.
+4. While uploading, open the browser's developer tools **Network** tab (on a laptop upload, or by remote debugging) and look at the upload request: its host must be the Supabase storage host (`<project-ref>.storage.supabase.co`), not the `onrender.com` address. Note any red CORS error in the console. As far as the project knows, Supabase has no setting for bucket CORS (**check on the vendor's page**), so if the browser blocks the upload request, **stop here and report it**; the fix is a code change that is not part of this guide.
 5. Both items show in the host gallery and the guest gallery.
 6. Download the ZIP of the event. Open it: the files and names should be right. Download a single photo from the host gallery: the file name should be the original name. If it is a random name, report it (the spec lists this as a known thing to check).
 7. Open the TV slideshow link on a laptop.
@@ -144,7 +146,7 @@ When you run this, personal data is processed by:
 The code has no Render or Supabase specific parts outside the S3 storage settings and the deploy files, so the move is mostly settings:
 
 - Create a Railway service from this repository; it can build the same `Dockerfile` (**check on the vendor's page** for how it picks a Dockerfile). `render.yaml` is then not used.
-- Set the same environment variables there. Railway gives its own `PORT`; `scripts/start.sh` already uses it.
+- Set the same environment variables there: `DATABASE_URL`, `AUTH_SECRET`, `HASH_SALT`, `AUTH_URL`, `NEXT_PUBLIC_APP_URL`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `ADMIN_EMAILS`, `TRUSTED_PROXY_HOPS`, `STORAGE_DRIVER=s3`, `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_MAX_OBJECT_BYTES` and `CRON_SECRET`. `DEPLOYED=1` already comes from the image, so it is safe there without being set, and `NODE_ENV` too. Railway gives its own `PORT`; `scripts/start.sh` already uses it.
 - Keep PostgreSQL and S3 standard: `DATABASE_URL` can point at Supabase, at Railway's own PostgreSQL, or at any PostgreSQL. The S3 variables can keep pointing at Supabase Storage or at any S3-compatible bucket (Cloudflare R2, AWS S3, a Railway bucket). To move existing data, copy the database with `pg_dump` and `psql`, and the bucket with any S3 copy tool.
 - Update `AUTH_URL`, `NEXT_PUBLIC_APP_URL` and the Google **redirect URI** to the new address.
-- Redo the `TRUSTED_PROXY_HOPS` check from section 5: the number of proxies in front of the app can be different.
+- Redo the `TRUSTED_PROXY_HOPS` measurement from section 5 (`LOG_PROXY_HOPS=1`): the number of proxies in front of the app can be different.

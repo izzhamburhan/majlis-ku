@@ -121,7 +121,9 @@ export async function completeUpload({ eventId, uploadId, guestId }: { eventId: 
   // Move it out of the guest's reach first, then check what is now there: a swap between the size check
   // and the copy is caught by the checks below, and a swap after the copy changes nothing that is served.
   if (staged) {
-    await store.copyObject(incoming, upload.objectKey);
+    // The content type is the one validated when the upload started (it is checked against magic bytes just below),
+    // never whatever header the guest's PUT carried.
+    await store.copyObject(incoming, upload.objectKey, { contentType: baseMime(upload.mimeType) });
     await store.deleteObject(incoming);
   }
   const stored = await store.stat(upload.objectKey);

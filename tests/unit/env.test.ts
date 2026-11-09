@@ -52,6 +52,14 @@ describe("parseEnv", () => {
     expect(() => parseEnv({ ...minimal, DEPLOYED: "true" })).toThrow(/DEPLOYED/);
   });
 
+  it("LOG_PROXY_HOPS is off unless it is exactly 1", () => {
+    expect(parseEnv(minimal).LOG_PROXY_HOPS).toBeUndefined();
+    expect(parseEnv({ ...minimal, LOG_PROXY_HOPS: "" }).LOG_PROXY_HOPS).toBeUndefined();
+    expect(parseEnv({ ...minimal, LOG_PROXY_HOPS: "1" }).LOG_PROXY_HOPS).toBe("1");
+    expect(parseEnv({ ...minimal, LOG_PROXY_HOPS: "0" }).LOG_PROXY_HOPS).toBe("0");
+    expect(() => parseEnv({ ...minimal, LOG_PROXY_HOPS: "true" })).toThrow(/LOG_PROXY_HOPS/);
+  });
+
   it("S3_MAX_OBJECT_BYTES is an optional positive whole number", () => {
     expect(parseEnv(minimal).S3_MAX_OBJECT_BYTES).toBeUndefined();
     expect(parseEnv({ ...minimal, S3_MAX_OBJECT_BYTES: "" }).S3_MAX_OBJECT_BYTES).toBeUndefined();

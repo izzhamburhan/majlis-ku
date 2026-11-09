@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import config from "../../../next.config";
+// A plain .mjs file, so the server can load it without TypeScript installed (next.config.ts needs the compiler at start-up).
+// @ts-expect-error TS7016: allowJs is off, so the config file has no types here; it is cast below.
+import config from "../../../next.config.mjs";
 
 async function headersFor(path: string): Promise<Record<string, string>> {
   const rules = await (config as { headers?: () => Promise<{ source: string; headers: { key: string; value: string }[] }[]> }).headers!();

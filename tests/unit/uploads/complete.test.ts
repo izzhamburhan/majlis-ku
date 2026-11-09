@@ -2,6 +2,7 @@ import type { UploadKind } from "@prisma/client";
 import sharp from "sharp";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeDb, fakeState, resetFakeDb, type FakeEvent } from "../support/fake-db";
+import { hugePng } from "../support/huge-png";
 import { fakeStorage, setUpFakeStorage, tearDownFakeStorage } from "../support/fake-storage";
 
 vi.mock("server-only", () => ({}));
@@ -81,6 +82,14 @@ describe("completeUpload", () => {
     expect(fakeState.uploads[0]?.displayKey).toBe(`events/${event.id}/${uploadId}/display.jpg`);
   });
 
+  it("completeUpload hands the stored content type to the copy, so guest-sent headers do not carry over", async () => {
+    const copy = vi.spyOn(fakeStorage.driver, "copyObject");
+    const { uploadId, incoming, original } = await start(jpeg);
+    await put(incoming, jpeg);
+    await complete(uploadId);
+    expect(copy).toHaveBeenCalledWith(incoming, original, { contentType: "image/jpeg" });
+  });
+
   it("a replaced incoming object cannot change original after complete", async () => {
     const { uploadId, signedKey, original } = await start(jpeg);
     await put(signedKey, jpeg);
@@ -134,6 +143,13 @@ describe("completeUpload", () => {
     const text = Buffer.from("this is not a picture at all, just some text");
     const { uploadId, incoming, original } = await start(text);
     await put(incoming, text);
+    await expectRejectedAndDeleted(uploadId, "invalid_file", 422, [incoming, original]);
+  });
+
+  it("rejects a photo with more pixels than the limit as invalid_file and deletes it", async () => {
+    const huge = hugePng(12000, 12000);
+    const { uploadId, incoming, original } = await start(huge, "PHOTO", "image/png");
+    await put(incoming, huge);
     await expectRejectedAndDeleted(uploadId, "invalid_file", 422, [incoming, original]);
   });
 

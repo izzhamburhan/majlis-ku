@@ -67,7 +67,10 @@ describe("assertDeployedConfig", () => {
     for (const hops of ["-1", "1.5", "two", " "]) {
       expect(assertDeployedConfig({ ...good, TRUSTED_PROXY_HOPS: hops }), hops).toEqual([expect.stringMatching(/^TRUSTED_PROXY_HOPS:/)]);
     }
-    expect(assertDeployedConfig({ ...good, TRUSTED_PROXY_HOPS: "0" })).toEqual([]);
+    // 0 means "no proxy in front", which would trust a header any visitor can forge.
+    expect(assertDeployedConfig({ ...good, TRUSTED_PROXY_HOPS: "0" })).toEqual([expect.stringMatching(/^TRUSTED_PROXY_HOPS:/)]);
+    expect(assertDeployedConfig({ ...good, TRUSTED_PROXY_HOPS: "1" })).toEqual([]);
+    expect(assertDeployedConfig({ ...good, TRUSTED_PROXY_HOPS: "2" })).toEqual([]);
   });
 
   it("names each missing S3 variable when STORAGE_DRIVER is s3, so a deploy cannot boot and fail on the first upload", () => {

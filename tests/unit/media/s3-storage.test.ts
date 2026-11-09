@@ -176,6 +176,9 @@ describe("S3StorageDriver calls the client with the right input", () => {
       Bucket: "media",
       Key: "events/e1/u1/original",
       CopySource: "media/events/e1/u1/incoming",
+      MetadataDirective: "REPLACE",
+      ContentType: "application/octet-stream",
+      ContentDisposition: "inline",
     });
     expect(sent[6]!.input).toMatchObject({
       Bucket: "media",
@@ -183,6 +186,20 @@ describe("S3StorageDriver calls the client with the right input", () => {
       ContentType: "video/mp4",
       ContentLength: 10,
     });
+  });
+
+  it("copyObject replaces the metadata: only the verified content type and inline disposition reach the copy", async () => {
+    const { client, sent } = fakeClient();
+    await new S3StorageDriver(CONFIG, client).copyObject("events/e1/u1/incoming", "events/e1/u1/original", { contentType: "image/jpeg" });
+    expect(sent[0]!.input).toEqual({
+      Bucket: "media",
+      Key: "events/e1/u1/original",
+      CopySource: "media/events/e1/u1/incoming",
+      MetadataDirective: "REPLACE", // never COPY: a guest chose the headers and metadata on the incoming object
+      ContentType: "image/jpeg",
+      ContentDisposition: "inline",
+    });
+    expect(sent[0]!.input).not.toHaveProperty("Metadata");
   });
 
   it("copyObject encodes each key segment in CopySource", async () => {

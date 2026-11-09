@@ -92,7 +92,7 @@ export class LocalStorageDriver implements StorageDriver {
     await this.copyInto(path, this.pathFor(key));
   }
 
-  async copyObject(from: string, to: string): Promise<void> {
+  async copyObject(from: string, to: string, _options?: { contentType?: string }): Promise<void> {
     await this.copyInto(this.pathFor(from), this.pathFor(to));
   }
 

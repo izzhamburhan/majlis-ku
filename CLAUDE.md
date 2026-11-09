@@ -59,7 +59,7 @@ Always name the role when dispatching a subagent; `.claude/settings.json` makes 
 
 ## Current priorities
 
-Decided by the developer on 2026-10-20: **get the whole system working locally first.** No hosting decision and no payment gateway yet. Plans and limits are still enforced, and an admin can set an event's plan by hand; the real `PaymentProvider` (phase 6) waits until the developer asks for it. Local development needs only Node.js: the database runs through `embedded-postgres` and media is stored on the local disk behind the same storage interface that S3 or R2 uses when deployed. Hosting was chosen on 2026-11-09: Render's free web service with Supabase (PostgreSQL and Storage); see `docs/deploy-render-supabase.md`. Local development stays as it was.
+Decided by the developer on 2026-10-20: **get the whole system working locally first.** There is no payment gateway yet. Plans and limits are still enforced, and an admin can set an event's plan by hand; the real `PaymentProvider` (phase 6) waits until the developer asks for it. Local development needs only Node.js: the database runs through `embedded-postgres` and media is stored on the local disk behind the same storage interface that S3 or R2 uses when deployed. Hosting is decided (2026-11-09): Render and Supabase free tiers for demos, Railway when the project is ready for real events. The files are written (Dockerfile, `render.yaml`, the S3 storage driver, `docs/deploy-render-supabase.md`); the first deploy is the developer's step and has not happened yet. Local development stays as it was.
 
 ## Stack
 

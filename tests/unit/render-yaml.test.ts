@@ -46,7 +46,7 @@ describe("render.yaml", () => {
     const vars = new Map(envVars().map((v) => [v.key, v]));
     expect(vars.get("DEPLOYED")?.value).toBe("1");
     expect(vars.get("STORAGE_DRIVER")?.value).toBe("s3");
-    expect(vars.get("S3_MAX_OBJECT_BYTES")?.value).toBe("52428800");
+    expect(vars.get("S3_MAX_OBJECT_BYTES")?.value).toBe("50000000");
     expect(vars.has("NODE_ENV")).toBe(false); // left to the image
 
     const synced = [
@@ -76,7 +76,7 @@ describe("render.yaml", () => {
 
   it("holds no value except the three fixed, non-secret settings", () => {
     const withValue = envVars().filter((v) => v.value !== undefined);
-    expect(withValue.map((v) => `${v.key}=${v.value}`).sort()).toEqual(["DEPLOYED=1", "S3_MAX_OBJECT_BYTES=52428800", "STORAGE_DRIVER=s3"]);
+    expect(withValue.map((v) => `${v.key}=${v.value}`).sort()).toEqual(["DEPLOYED=1", "S3_MAX_OBJECT_BYTES=50000000", "STORAGE_DRIVER=s3"]);
     expect(text).not.toMatch(/postgres(ql)?:\/\//i);
     expect(text).not.toMatch(/[A-Za-z0-9+/_-]{32,}/);
   });

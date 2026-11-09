@@ -15,7 +15,7 @@ services:
       - key: STORAGE_DRIVER
         value: s3
       - key: S3_MAX_OBJECT_BYTES
-        value: "52428800"
+        value: "50000000"
       # Entered in the dashboard.
       - key: DATABASE_URL
         sync: false

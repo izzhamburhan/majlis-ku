@@ -15,6 +15,9 @@ const schema = z.object({
   DEPLOYED: z.enum(["0", "1"]).optional(),
   // How many proxies sit in front of the app; the client IP is the x-forwarded-for entry that many from the right. Required when DEPLOYED=1.
   TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).optional(),
+  // "1" (with DEPLOYED=1 only) logs, for the first 20 guest requests after start, how many x-forwarded-for entries
+  // arrive and whether x-real-ip is present; never an address. For finding the right TRUSTED_PROXY_HOPS, then turn it off.
+  LOG_PROXY_HOPS: z.enum(["0", "1"]).optional(),
   AUTH_GOOGLE_ID: optional,
   AUTH_GOOGLE_SECRET: optional,
   EMAIL_SERVER: optional,

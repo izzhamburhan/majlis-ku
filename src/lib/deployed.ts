@@ -29,8 +29,8 @@ export function assertDeployedConfig(source: EnvSource): string[] {
     if (blank(source[name])) problems.push(`${name}: must be set (Google is the only sign-in option unless EMAIL_SERVER is configured)`);
   }
   if (value("ADMIN_EMAILS").split(",").every((email) => email.trim() === "")) problems.push("ADMIN_EMAILS: must list at least one admin email");
-  if (!/^\d+$/.test(value("TRUSTED_PROXY_HOPS"))) {
-    problems.push("TRUSTED_PROXY_HOPS: must be a whole number of 0 or more (how many proxies sit in front of the app)");
+  if (!/^\d+$/.test(value("TRUSTED_PROXY_HOPS")) || Number(value("TRUSTED_PROXY_HOPS")) < 1) {
+    problems.push("TRUSTED_PROXY_HOPS: must be a whole number of 1 or more (how many proxies sit in front of the app; 0 would trust a header any visitor can forge)");
   }
 
   const driver = value("STORAGE_DRIVER") || "local";

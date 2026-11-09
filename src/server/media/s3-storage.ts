@@ -170,9 +170,20 @@ export class S3StorageDriver implements StorageDriver {
     }
   }
 
-  async copyObject(from: string, to: string): Promise<void> {
+  async copyObject(from: string, to: string, options: { contentType?: string } = {}): Promise<void> {
     const source = from.split("/").map(encodeURIComponent).join("/");
-    await this.client.send(new CopyObjectCommand({ Bucket: this.bucket, Key: to, CopySource: `${this.bucket}/${source}` }));
+    await this.client.send(
+      new CopyObjectCommand({
+        Bucket: this.bucket,
+        Key: to,
+        CopySource: `${this.bucket}/${source}`,
+        // REPLACE, not COPY: the guest PUT the incoming object, so its Content-Type, Content-Disposition, Cache-Control
+        // and metadata are the guest's choice and must not reach the object that gets served.
+        MetadataDirective: "REPLACE",
+        ContentType: options.contentType ?? "application/octet-stream",
+        ContentDisposition: "inline",
+      }),
+    );
   }
 
   async deleteObject(key: string): Promise<void> {

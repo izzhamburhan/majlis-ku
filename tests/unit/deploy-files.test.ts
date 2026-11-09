@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const read = (path: string) => readFileSync(path, "utf8");
@@ -38,6 +38,28 @@ describe("deploy files", () => {
     for (const name of ["DATABASE_URL", "AUTH_SECRET", "HASH_SALT", "NEXT_PUBLIC_APP_URL"]) expect(build).toContain(`${name}=`);
   });
 
+  it("the run stage sets DEPLOYED=1 and the build stage does not", () => {
+    const docker = read("Dockerfile");
+    const [beforeRun, run] = docker.split(/^FROM base AS run$/m);
+    expect(run).toMatch(/^ENV .*DEPLOYED=1/m);
+    expect(beforeRun).not.toMatch(/DEPLOYED/); // `next build` must not run the live-deployment checks
+  });
+
+  it("the image carries the config check and the one file it imports", () => {
+    const docker = read("Dockerfile");
+    expect(docker).toContain("scripts/check-config.ts");
+    expect(docker).toContain("/app/src/lib/deployed.ts");
+    expect(docker).toContain("scripts/start.sh");
+  });
+
+  it("the Next.js config is a plain .mjs file and the image copies it, so no TypeScript is needed to start", () => {
+    expect(existsSync("next.config.mjs")).toBe(true);
+    expect(existsSync("next.config.ts")).toBe(false);
+    const docker = read("Dockerfile");
+    expect(docker).toContain("/app/next.config.mjs");
+    expect(docker).not.toContain("next.config.ts");
+  });
+
   it(".dockerignore excludes .env and node_modules", () => {
     const ignore = read(".dockerignore")
       .split(/\r?\n/)
@@ -54,11 +76,15 @@ describe("deploy files", () => {
     expect(job).toMatch(/uses: actions\/checkout@v\d+/);
   });
 
-  it("start.sh runs migrate deploy before seed before next start, with LF endings", () => {
+  it("start.sh runs the config check, then migrate, then seed, then next start", () => {
     const script = read("scripts/start.sh");
     expect(script).not.toContain("\r");
     expect(script.startsWith("#!/bin/sh\n")).toBe(true);
     expect(script).toMatch(/^set -e$/m);
+    // A bad configuration must stop the container before any migration is applied to the database.
+    const check = script.indexOf("scripts/check-config.ts");
+    expect(check).toBeGreaterThan(-1);
+    expect(script.indexOf("prisma migrate deploy")).toBeGreaterThan(check);
     const migrate = script.indexOf("prisma migrate deploy");
     const seed = script.indexOf("db:seed:prod");
     const start = script.indexOf("exec ");

@@ -33,16 +33,20 @@ RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" AUTH_SECRET="bu
  && rm -rf .next/cache
 
 FROM base AS run
-ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000
+# DEPLOYED=1 turns on the start-up safety checks (src/lib/deployed.ts), so the image refuses to run unsafe wherever it is
+# hosted: Render, Railway or anything else. It is a switch, not a secret.
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 DEPLOYED=1
 RUN chown node:node /app
 COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/.next ./.next
 COPY --from=build --chown=node:node /app/public ./public
 COPY --from=build --chown=node:node /app/prisma ./prisma
-COPY --from=build --chown=node:node /app/package.json /app/next.config.ts ./
-# next.config.ts points the i18n plugin at this file, so it has to exist at start-up.
+COPY --from=build --chown=node:node /app/package.json /app/next.config.mjs ./
+# next.config.mjs points the i18n plugin at this file, so it has to exist at start-up.
 COPY --from=build --chown=node:node /app/src/i18n ./src/i18n
-COPY --chown=node:node scripts/start.sh ./scripts/start.sh
+# start.sh runs check-config.ts first; that script reads only src/lib/deployed.ts, so just that file is copied.
+COPY --from=build --chown=node:node /app/src/lib/deployed.ts ./src/lib/deployed.ts
+COPY --chown=node:node scripts/start.sh scripts/check-config.ts ./scripts/
 USER node
 EXPOSE 3000
 CMD ["sh", "scripts/start.sh"]

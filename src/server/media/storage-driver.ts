@@ -24,8 +24,12 @@ export interface StorageDriver {
   downloadToFile(key: string, path: string): Promise<void>;
   /** Store a local file as an object without loading it into memory. */
   putObjectFromFile(key: string, path: string, contentType: string): Promise<void>;
-  /** Copy inside the store; the source stays. Rejects when the source does not exist. */
-  copyObject(from: string, to: string): Promise<void>;
+  /**
+   * Copy inside the store; the source stays. Rejects when the source does not exist. The copy never inherits the
+   * source's headers or metadata (a guest chose those): a store that keeps them sets `contentType` and an inline
+   * disposition instead. The local driver has no headers and ignores `contentType`.
+   */
+  copyObject(from: string, to: string, options?: { contentType?: string }): Promise<void>;
   deleteObject(key: string): Promise<void>;
   /** Delete everything in the folder `prefix`. `events/a` and `events/a/` both mean the folder, never `events/ab/`. */
   deletePrefix(prefix: string): Promise<void>;

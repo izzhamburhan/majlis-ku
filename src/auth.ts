@@ -4,6 +4,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { isDeployed } from "@/lib/deployed";
 import { env } from "@/lib/env";
+import { withoutProviderTokens } from "@/server/auth/adapter";
 import { emailProvider } from "@/server/auth/email";
 import { providerIds } from "@/server/auth/sign-in-options";
 import { acceptGoogleProfile, mayPromoteToAdmin } from "@/server/auth/verified-email";
@@ -28,7 +29,8 @@ const providers = providerIds({ deployed: isDeployed(), emailServer: EMAIL_SERVE
 );
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(db),
+  // Google tokens are not kept: sign-in needs only the identity (see withoutProviderTokens).
+  adapter: withoutProviderTokens(PrismaAdapter(db)),
   session: { strategy: "database" },
   trustHost: true,
   providers,

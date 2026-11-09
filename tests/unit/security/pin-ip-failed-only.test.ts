@@ -10,6 +10,7 @@ const store = vi.hoisted(() => ({
   $queryRaw: undefined as unknown as (strings: TemplateStringsArray, ...values: unknown[]) => Promise<unknown>,
   findUnique: undefined as unknown as (args: { where: { key: string } }) => Promise<unknown>,
   deleteMany: undefined as unknown as (args: { where: { key: string } }) => Promise<unknown>,
+  updateMany: undefined as unknown as (args: { where: { key: string; count?: { gt: number } }; data: { count: { decrement: number } } }) => Promise<unknown>,
 }));
 store.$queryRaw = async (_strings, ...values) => {
   const key = String(values[0]);
@@ -22,8 +23,14 @@ store.findUnique = async ({ where }) => {
   return count === undefined ? null : { count, windowStart: new Date() };
 };
 store.deleteMany = async ({ where }) => void store.counts.delete(where.key);
+store.updateMany = async ({ where, data }) => {
+  const current = store.counts.get(where.key);
+  if (current === undefined || (where.count && !(current > where.count.gt))) return { count: 0 };
+  store.counts.set(where.key, current - data.count.decrement);
+  return { count: 1 };
+};
 vi.mock("@/server/db", () => ({
-  db: { $queryRaw: store.$queryRaw, rateLimit: { findUnique: store.findUnique, deleteMany: store.deleteMany } },
+  db: { $queryRaw: store.$queryRaw, rateLimit: { findUnique: store.findUnique, deleteMany: store.deleteMany, updateMany: store.updateMany } },
 }));
 
 const events = vi.hoisted(() => ({ current: "ev1" }));
@@ -66,7 +73,7 @@ describe("per-IP PIN limit counts failures only", () => {
   it("a correct PIN does not use up the per-IP allowance", async () => {
     store.pinOk = true;
     for (let i = 0; i < 40; i++) expect((await post()).status, `guest ${i}`).toBe(204);
-    expect(store.counts.get("pinIp:ev1:ip-1")).toBeUndefined();
+    expect(store.counts.get("pinIp:ev1:ip-1") ?? 0).toBe(0); // counted, then given back
     // A wrong PIN after 40 successes is still a normal wrong PIN, not a lockout.
     store.pinOk = false;
     expect((await post()).status).toBe(403);

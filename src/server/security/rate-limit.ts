@@ -34,7 +34,13 @@ export function createRateLimiter({ name, limit, windowMs }: { name: string; lim
     await db.rateLimit.deleteMany({ where: { key: `${name}:${key}` } });
   }
 
-  return { hit, peek, reset };
+  // Gives one attempt back, for a hit that turned out not to count (a correct PIN, a refused attempt). Atomic, and
+  // never takes the count below zero. An expired window has nothing to give back; the next hit starts a fresh one.
+  async function release(key: string): Promise<void> {
+    await db.rateLimit.updateMany({ where: { key: `${name}:${key}`, count: { gt: 0 } }, data: { count: { decrement: 1 } } });
+  }
+
+  return { hit, peek, reset, release };
 }
 
 const MINUTE = 60_000;
@@ -46,7 +52,8 @@ export const limiters = {
   guestJoin: createRateLimiter({ name: "guestJoin", limit: 30, windowMs: 10 * MINUTE }),
   pinAttempt: createRateLimiter({ name: "pinAttempt", limit: 5, windowMs: 10 * MINUTE }),
   // Per event and salted IP hash, on top of pinAttempt: clearing cookies gives a new device but not a new address.
-  // Counts wrong PINs only (peek before verifying, hit on a wrong one), so guests behind one venue Wi-Fi address
+  // Counts wrong PINs only: the attempt is counted BEFORE the slow check, so parallel guesses cannot all pass a read,
+  // and given back (release) when the PIN is right or the attempt was refused, so guests behind one venue Wi-Fi address
   // who enter the right PIN never use it up. 20 leaves room for typos from many guests or carrier NAT.
   pinIp: createRateLimiter({ name: "pinIp", limit: 20, windowMs: 10 * MINUTE }),
   rsvp: createRateLimiter({ name: "rsvp", limit: 10, windowMs: 10 * MINUTE }),

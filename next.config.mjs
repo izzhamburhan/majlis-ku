@@ -1,5 +1,7 @@
-import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+
+// A plain .mjs file on purpose: next.config.ts needs the TypeScript compiler when the server starts, and the
+// production image installs no dev dependencies.
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -13,7 +15,8 @@ const securityHeaders = [
   { key: "Content-Security-Policy", value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'" },
 ];
 
-const nextConfig: NextConfig = {
+/** @type {import("next").NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   // pdfkit reads its font metrics and ffmpeg-static points at its binary from their own folders; keep them out of the bundle.

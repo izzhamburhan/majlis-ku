@@ -37,6 +37,26 @@ function s3Driver(): S3StorageDriver {
   return s3;
 }
 
+/**
+ * At server start: with STORAGE_DRIVER=s3, build the driver now so a missing S3_* variable stops the server with a
+ * clear message instead of failing on the first guest upload. Names only, never values. Does nothing for the local driver.
+ */
+export function enforceStorageConfig(
+  io: { write: (text: string) => void; exit: (code: number) => void } = {
+    write: (text) => void process.stderr.write(text),
+    exit: (code) => process.exit(code),
+  },
+): void {
+  if (env().STORAGE_DRIVER !== "s3") return;
+  try {
+    s3Driver();
+  } catch (error) {
+    io.write(`[config] ${error instanceof Error ? error.message : "storage is not configured"}
+`);
+    io.exit(1);
+  }
+}
+
 /** The configured driver, as the interface: callers must not depend on which one it is. */
 export function storage(): StorageDriver {
   if (env().STORAGE_DRIVER === "s3") return s3Driver();
